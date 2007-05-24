@@ -2,9 +2,9 @@ from django.core import serializers
 from django.http import HttpResponse
     
 class SerializeResponder(object):
-    def __init__(self, format):
+    def __init__(self, format, mimetype='text/plain'):
         self.format = format
-        self.mimetype = 'text/plain'
+        self.mimetype = mimetype
         
     def render(self, queryset):
         return serializers.serialize(self.format, queryset)
@@ -21,13 +21,11 @@ class SerializeResponder(object):
     
 class JSONResponder(SerializeResponder):
     def __init__(self):
-        SerializeResponder.__init__(self, "json")
-        self.mimetype = 'application/json'
+        SerializeResponder.__init__(self, 'json', 'application/json')
 
 class XMLResponder(SerializeResponder):
     def __init__(self):
-        SerializeResponder.__init__(self, "xml")
-        self.mimetype = 'application/xml'
+        SerializeResponder.__init__(self, 'xml', 'application/xml')
 
 #class TemplateResponder(object):
 #    def __init__(self, template_dir, paginate_by, template_loader, extra_context, 
