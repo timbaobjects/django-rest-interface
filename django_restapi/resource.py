@@ -30,16 +30,16 @@ class Resource(object):
         else:
             raise Http404
         
-    def create(self, request, ident, noun):
+    def create(self, request):
         raise Http404
     
-    def read(self, request, ident, noun):
+    def read(self, request, ident):
         raise Http404
     
-    def update(self, request, ident, noun):
+    def update(self, request, ident):
         raise Http404
     
-    def delete(self, request, ident, noun):
+    def delete(self, request, ident):
         raise Http404
 
 def dispatch(request, resource, ident=''):
