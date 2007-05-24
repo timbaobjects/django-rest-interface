@@ -4,8 +4,8 @@ class Resource(object):
     """
     Generic resource class that can be used for
     resources that are not based on Django models
-    and is the basis for the model-bound ModelCollection
-    and ModelResource classes.
+    and is the basis for the model-bound ModelResource
+    class.
     """
     def __init__(self, permitted_methods, mimetype=None):
         self.permitted_methods = [op.upper() for op in permitted_methods]
