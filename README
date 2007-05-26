@@ -1,0 +1,19 @@
+The django-rest-interface project includes two parts:
+
+A) The REST interface: django_restapi
+
+resource.Resource is the generic class for REST resources. Use 
+this class for resources that don't necessarily map 1:1 to Django
+models. model_resource.ModelResource is an  example of it in
+use. Use it when resources map directly to Django models.
+
+responder contains classes you can use to choose which type of 
+output format ModelResource returns. For instance, add
+"responder = XMLResponder()" to ModelResource's constructor 
+call in urls.py in order to use XML as a format.
+
+B) Tests: django_restapi_tests
+
+Contains the API tests. Will be replaced by tests using Russells 
+framework. For now, first run runserver.py, then runtests.py in 
+order to test the REST interface.
