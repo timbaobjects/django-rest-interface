@@ -12,8 +12,8 @@ class Resource(object):
         self.mimetype = mimetype
         
     def get_url_pattern(self, base_url):
-        return (r'^%s(?:(?P<ident>\d+)/?)?$', 'django_restapi.resource.dispatch' % 
-                base_url, {'resource' : self})
+        return (r'^%s(?:(?P<ident>\d+)/?)?$' % base_url,
+                     'django_restapi.resource.dispatch', {'resource' : self})
     
     def dispatch(self, request,  ident=''):
         request_method = request.method.upper()
