@@ -1,5 +1,13 @@
 #!/usr/bin/env python
-import httplib2 # http://bitworking.org/projects/httplib2/
+"""
+Tests django_restapi by requesting various GET/POST/PUT/DELETE
+operations and ensures that the server returns the appropriate HTTP
+status headers and redirects.
+Assumes that a web server (presumably the Django test server that can by run
+by runserver.py) runs at localhost:8000.
+Needs httplib2 from http://bitworking.org/projects/httplib2/
+"""
+import httplib2
 from urllib import urlencode
 import webbrowser
 import re
