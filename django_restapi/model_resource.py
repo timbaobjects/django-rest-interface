@@ -22,19 +22,19 @@ class ModelResource(Resource):
     def __init__(self, queryset, permitted_methods, responder, expose_fields, 
                  base_url, ident_field='id'):
         # queryset -- determines of which subset of a Django model objects
-        #                       this resource consists.
+        #             this resource consists.
         # permitted_methods -- the HTTP request methods that
-        #                       are allowed for this resource e.g. ('GET', 'PUT')
+        #                      are allowed for this resource e.g. ('GET', 'PUT')
         # responder -- the data format class that creates HttpResponse
-        #                       objects from single or multiple model objects and
-        #                       renders forms
+        #              objects from single or multiple model objects and
+        #              renders forms
         # expose_fields -- the model fields that can be accessed
-        #                       by the HTTP methods described in permitted_methods
+        #                  by the HTTP methods described in permitted_methods
         # base_url -- The URL of the collection of model objects for
-        #                       this resource, e.g. 'xml/choices/'
+        #             this resource, e.g. 'xml/choices/'
         # ident_field -- the name of a model field (a number field, a character 
-        #                       field or a slug field) that is used to construct the URL
-        #                       of individual resource objects from base_url.
+        #                field or a slug field) that is used to construct the URL
+        #                of individual resource objects from base_url.
         self.queryset = queryset
         self.expose_fields = expose_fields
         self.responder = responder

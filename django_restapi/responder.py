@@ -15,12 +15,12 @@ class SerializeResponder(object):
     """
     def __init__(self, format, mimetype=None):
         # format -- may be every format that works with 
-        #                   Django's serializer framework.
-        #                   By default: xml, python, json, (yaml).
+        #           Django's serializer framework.
+        #           By default: xml, python, json, (yaml).
         # mimetype -- if the default None is not changed, any 
-        #                   HttpResponse calls use 
-        #                   settings.DEFAULT_CONTENT_TYPE and
-        #                   settings.DEFAULT_CHARSET
+        #             HttpResponse calls use 
+        #             settings.DEFAULT_CONTENT_TYPE and
+        #             settings.DEFAULT_CHARSET
         self.format = format
         self.mimetype = mimetype
         
@@ -62,8 +62,9 @@ class XMLResponder(SerializeResponder):
         SerializeResponder.__init__(self, 'xml', 'application/xml')
 
 #class TemplateResponder(object):
-#    def __init__(self, template_dir, paginate_by, template_loader, extra_context, 
-#                 allow_empty, context_processors, template_object_name, mimetype):
+#    def __init__(self, template_dir, paginate_by, template_loader,
+#                 extra_context, allow_empty, context_processors,
+#                 template_object_name, mimetype):
 #        pass
 #    def list(self, queryset):
 #        pass

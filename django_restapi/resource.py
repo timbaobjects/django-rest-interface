@@ -11,12 +11,12 @@ class Resource(object):
     class.
     """
     def __init__(self, permitted_methods, mimetype=None):
-        # permitted_methods -- the HTTP request methods that
-        #                        are allowed for this resource e.g. ('GET', 'PUT')
+        # permitted_methods -- the HTTP request methods that are
+        #                      allowed for this resource e.g. ('GET', 'PUT')
         # mimetype -- if the default None is not changed, any 
-        #                        HttpResponse calls use 
-        #                        settings.DEFAULT_CONTENT_TYPE and
-        #                        settings.DEFAULT_CHARSET
+        #             HttpResponse calls use 
+        #             settings.DEFAULT_CONTENT_TYPE and
+        #             settings.DEFAULT_CHARSET
         self.permitted_methods = [op.upper() for op in permitted_methods]
         self.mimetype = mimetype
         
@@ -27,7 +27,7 @@ class Resource(object):
         to the dispatch method of this resource instance.
         """
         return (r'^%s(?:(?P<ident>\d+)/?)?$' % base_url,
-                     'django_restapi.resource.dispatch', {'resource' : self})
+                'django_restapi.resource.dispatch', {'resource' : self})
     
     def dispatch(self, request,  ident=''):
         """
