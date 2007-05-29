@@ -14,13 +14,15 @@ class SerializeResponder(object):
     with Django's serializer framework.
     """
     def __init__(self, format, mimetype=None):
-        # format -- may be every format that works with 
-        #           Django's serializer framework.
-        #           By default: xml, python, json, (yaml).
-        # mimetype -- if the default None is not changed, any 
-        #             HttpResponse calls use 
-        #             settings.DEFAULT_CONTENT_TYPE and
-        #             settings.DEFAULT_CHARSET
+        """
+        format:
+            may be every format that works with Django's serializer
+            framework. By default: xml, python, json, (yaml).
+        mimetype:
+            if the default None is not changed, any HttpResponse calls 
+            use settings.DEFAULT_CONTENT_TYPE and
+            settings.DEFAULT_CHARSET
+        """
         self.format = format
         self.mimetype = mimetype
         

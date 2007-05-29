@@ -1,7 +1,7 @@
 """
 Generic resource class.
 """
-from django.http import Http404, HttpResponseNotAllowed
+from django.http import Http404, HttpResponseNotAllowed, QueryDict
 
 class Resource(object):
     """
@@ -11,12 +11,15 @@ class Resource(object):
     class.
     """
     def __init__(self, permitted_methods, mimetype=None):
-        # permitted_methods -- the HTTP request methods that are
-        #                      allowed for this resource e.g. ('GET', 'PUT')
-        # mimetype -- if the default None is not changed, any 
-        #             HttpResponse calls use 
-        #             settings.DEFAULT_CONTENT_TYPE and
-        #             settings.DEFAULT_CHARSET
+        """
+        permitted_methods:
+            the HTTP request methods that are allowed for this
+            resource e.g. ('GET', 'PUT')
+        mimetype:
+            if the default None is not changed, any HttpResponse calls
+            use settings.DEFAULT_CONTENT_TYPE and 
+            settings.DEFAULT_CHARSET
+        """
         self.permitted_methods = [op.upper() for op in permitted_methods]
         self.mimetype = mimetype
         
@@ -43,6 +46,10 @@ class Resource(object):
         elif request_method == 'POST':
             return self.create(request)
         elif request_method == 'PUT':
+            # PUT and POST requests only differ in REQUEST_METHOD,
+            # not in the way data is encoded. As with POST,
+            # files are stored in request.FILES.
+            request.PUT = QueryDict(request.raw_post_data)
             return self.update(request, ident)
         elif request_method == 'DELETE':
             return self.delete(request, ident)
@@ -71,3 +78,4 @@ def dispatch(request, resource, ident=''):
     argument to the dispatch method of the instance.
     """
     return resource.dispatch(request, ident)
+    

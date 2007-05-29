@@ -12,6 +12,15 @@ from urllib import urlencode
 import webbrowser
 import re
 
+SHOW_ERRORS_IN_BROWSER = False
+
+def show_in_browser(content):
+    if SHOW_ERRORS_IN_BROWSER:
+        f = open("/tmp/djangorest_error", "w")
+        f.write(content)
+        f.close()
+        webbrowser.open_new("file:///tmp/djangorest_error")
+
 def runtests():
     host = 'localhost'
     port = '8000'
@@ -22,11 +31,10 @@ def runtests():
     url = 'http://%s:%s/xml/polls/' % (host, port)
     params = urlencode({
         'question' : 'Does this work',
-        'pub_date_date' : '2001-01-01',
-        'pub_date_time' : '12:05:01'
+        'pub_date' : '2001-01-01'
     })
     headers, content = http.request(url, 'POST', params)
-    assert headers['status'] == '302', content
+    assert headers['status'] == '302', show_in_browser(content)
     location = headers['location']
     print location
     poll_id = int(re.findall("\d+", location)[0])
@@ -37,29 +45,28 @@ def runtests():
     url = 'http://%s:%s/xml/polls/%d/' % (host, port, poll_id)
     params = urlencode({
         'question' : 'Yes, it works.',
-        'pub_date_date' : '2007-07-07',
-        'pub_date_time' : '12:05:01'
+        'pub_date' : '2007-07-07'
     })
-    headers, content = http.request(url, 'POST', params) # TODO: PUT
-    assert headers['status'] == '302', content
+    headers, content = http.request(url, 'PUT', params)
+    assert headers['status'] == '302', show_in_browser(content)
     print 'Updated poll:', poll_id
     print 'Redirect to:', headers['location']
     
     # Read poll
     headers, content = http.request(url, 'GET')
-    assert headers['status'] == '200', content
+    assert headers['status'] == '200', show_in_browser(content)
     print content
     
     # Delete poll
     headers, content = http.request(url, 'DELETE')
-    assert headers['status'] == '302', content
+    assert headers['status'] == '302', show_in_browser(content)
     print 'Deleted poll:', poll_id
     print 'Redirect to:', headers['location']
     
     # Read choice
     url = 'http://%s:%s/xml/choices/1/' % (host, port)
     headers, content = http.request(url, 'GET')
-    assert headers['status'] == '200', content
+    assert headers['status'] == '200', show_in_browser(content)
     print content
     
     # Try to delete choice (must fail)

@@ -1,7 +1,7 @@
 """
 Model-bound resource class.
 """
-from django import forms
+from django import newforms as forms
 from django.db.models.fields import AutoField, CharField, IntegerField, \
          PositiveIntegerField, SlugField, SmallIntegerField
 from django.http import Http404, HttpResponseRedirect
@@ -20,36 +20,45 @@ class ModelResource(Resource):
     Resource for Django models.
     """
     def __init__(self, queryset, permitted_methods, responder, expose_fields, 
-                 base_url, ident_field='id'):
-        # queryset -- determines of which subset of a Django model objects
-        #             this resource consists.
-        # permitted_methods -- the HTTP request methods that
-        #                      are allowed for this resource e.g. ('GET', 'PUT')
-        # responder -- the data format class that creates HttpResponse
-        #              objects from single or multiple model objects and
-        #              renders forms
-        # expose_fields -- the model fields that can be accessed
-        #                  by the HTTP methods described in permitted_methods
-        # base_url -- The URL of the collection of model objects for
-        #             this resource, e.g. 'xml/choices/'
-        # ident_field -- the name of a model field (a number field, a character 
-        #                field or a slug field) that is used to construct the URL
-        #                of individual resource objects from base_url.
+                 base_url, ident_field_name='id'):
+        """
+        queryset:
+            determines of which subset of a Django model objects
+            this resource consists.
+        permitted_methods:
+            the HTTP request methods that are allowed for this 
+            resource e.g. ('GET', 'PUT')
+        responder:
+            the data format class that creates HttpResponse
+            objects from single or multiple model objects and
+            renders forms
+        expose_fields:
+            the model fields that can be accessed
+            by the HTTP methods described in permitted_methods
+        base_url:
+            The URL of the collection of model objects for
+            this resource, e.g. 'xml/choices/'
+        ident_field_name:
+            the name of a model field (a number field, a character 
+            field or a slug field) that is used to construct the URL
+            of individual resource objects from base_url.
+        """
         self.queryset = queryset
         self.expose_fields = expose_fields
         self.responder = responder
-        self.ident_field = ident_field
+        self.ident_field = self.queryset.model._meta.get_field(ident_field_name)
         self.base_url = base_url
         Resource.__init__(self, permitted_methods, responder.mimetype)
     
     def get_url_pattern(self):
         """
         Returns an url pattern that redirects any calls to /[self.base_url]/
-        and /[self.base_url]/[self.ident_field]/ indirectly (via the dispatch 
+        and /[self.base_url]/[self.ident]/ indirectly (via the dispatch 
         helper function) to the dispatch method of this resource instance.
         """
-        # Get the field with the name specified in self.ident_field
-        f = self.queryset.model._meta.get_field(self.ident_field).__class__
+        # Get the field class that identifies a specific resource 
+        # object (usually the class of the primary key field).
+        f = self.ident_field.__class__
         
         # Get the regular expression for this type of field
         if f in (AutoField, IntegerField, PositiveIntegerField, SmallIntegerField):
@@ -79,16 +88,14 @@ class ModelResource(Resource):
         Creates a resource with attributes given by POST, then
         redirects to the resource URI. 
         """
-        manipulator = self.queryset.model.AddManipulator()
-        new_data = request.POST.copy()
-        errors = manipulator.get_validation_errors(new_data)
-        if not errors:
-            manipulator.do_html2python(new_data)
-            new_object = manipulator.save(new_data)
-            new_object_url = self.get_resource_url(getattr(new_object, self.ident_field))
+        ResourceForm = forms.form_for_model(self.queryset.model)
+        f = ResourceForm(request.POST)
+        if f.is_valid():
+            new_object = f.save()
+            new_object_url = self.get_resource_url(getattr(new_object, self.ident_field.name))
             return HttpResponseRedirect(new_object_url)
         # TODO: What happens if there are errors?
-        form = forms.FormWrapper(manipulator, new_data, errors)
+        print f.errors
         raise Exception('Model data errors are not handled yet.')
     
     def read(self, request, ident):
@@ -99,7 +106,7 @@ class ModelResource(Resource):
         HTTP request to the resource URI with method GET.
         """
         if ident:
-            resource_object = self.queryset.get(**{self.ident_field : ident})
+            resource_object = self.queryset.get(**{self.ident_field.name : ident})
             return self.responder.element(resource_object)
         else:
             return self.responder.list(self.queryset)
@@ -110,21 +117,13 @@ class ModelResource(Resource):
         and redirects to the resource URI. Usually called by a HTTP
         request to the resource URI with method PUT.
         """
-        try:
-            # TODO: Make sure ident_field is the primary key,
-            # otherwise get the primary key for the object
-            # identified by ident
-            manipulator = self.queryset.model.ChangeManipulator(ident)
-        except self.queryset.model.DoesNotExist:
-            raise Http404
-        new_data = request.POST.copy()         # TODO: PUT instead of POST
-        errors = manipulator.get_validation_errors(new_data)
-        if not errors:
-            manipulator.do_html2python(new_data)
-            manipulator.save(new_data)
+        resource_object = self.queryset.get(**{self.ident_field.name : ident})
+        ResourceForm = forms.form_for_instance(resource_object)
+        f = ResourceForm(request.PUT)
+        if f.is_valid():
+            f.save()
             return HttpResponseRedirect(self.get_resource_url(ident))
         # TODO: What happens if there are errors?
-        form = forms.FormWrapper(manipulator, new_data, errors)
         raise Exception('Model data errors are not handled yet.')
     
     def delete(self, request, ident):
@@ -134,7 +133,7 @@ class ModelResource(Resource):
         resource URI with method DELETE.
         """
         try:
-            resource_object = self.queryset.get(**{self.ident_field : ident})
+            resource_object = self.queryset.get(**{self.ident_field.name : ident})
         except self.queryset.model.DoesNotExist:
             raise Http404
         resource_object.delete()
