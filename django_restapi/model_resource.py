@@ -23,8 +23,8 @@ class ModelResource(Resource):
                  base_url, ident_field_name='id'):
         """
         queryset:
-            determines of which subset of a Django model objects
-            this resource consists.
+            determines the subset of objects (of a Django model)
+            that make up this resource
         permitted_methods:
             the HTTP request methods that are allowed for this 
             resource e.g. ('GET', 'PUT')
