@@ -4,7 +4,7 @@ Model-bound resource class.
 from django import newforms as forms
 from django.db.models.fields import AutoField, CharField, IntegerField, \
          PositiveIntegerField, SlugField, SmallIntegerField
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from resource import Resource
 
 class InvalidURLField(Exception):
@@ -44,7 +44,7 @@ class ModelResource(Resource):
             of individual resource objects from base_url.
         """
         self.queryset = queryset
-        self.expose_fields = expose_fields
+        self.expose_fields = expose_fields # TODO: Use expose_fields
         self.responder = responder
         self.ident_field = self.queryset.model._meta.get_field(ident_field_name)
         self.base_url = base_url
@@ -88,15 +88,19 @@ class ModelResource(Resource):
         Creates a resource with attributes given by POST, then
         redirects to the resource URI. 
         """
+        # Create a form filled with the POST data
         ResourceForm = forms.form_for_model(self.queryset.model)
         f = ResourceForm(request.POST)
+        
+        # If the data contains no errors, save the object and
+        # redirect to its URI.
         if f.is_valid():
             new_object = f.save()
             new_object_url = self.get_resource_url(getattr(new_object, self.ident_field.name))
             return HttpResponseRedirect(new_object_url)
-        # TODO: What happens if there are errors?
-        print f.errors
-        raise Exception('Model data errors are not handled yet.')
+        
+        # Otherwise return a 400 Bad Request error.
+        return self.responder.error(400, f.errors)
     
     def read(self, request, ident):
         """
@@ -106,7 +110,10 @@ class ModelResource(Resource):
         HTTP request to the resource URI with method GET.
         """
         if ident:
-            resource_object = self.queryset.get(**{self.ident_field.name : ident})
+            try:
+                resource_object = self.queryset.get(**{self.ident_field.name : ident})
+            except self.queryset.model.DoesNotExist:
+                return self.responder.error(404)
             return self.responder.element(resource_object)
         else:
             return self.responder.list(self.queryset)
@@ -117,14 +124,23 @@ class ModelResource(Resource):
         and redirects to the resource URI. Usually called by a HTTP
         request to the resource URI with method PUT.
         """
-        resource_object = self.queryset.get(**{self.ident_field.name : ident})
+        try:
+            resource_object = self.queryset.get(**{self.ident_field.name : ident})
+        except self.queryset.model.DoesNotExist:
+            return self.responder.error(404)
+        
+        # Create a form from the model/PUT data
         ResourceForm = forms.form_for_instance(resource_object)
         f = ResourceForm(request.PUT)
+        
+        # If the data contains no errors, save the object and
+        # redirect to its URI.
         if f.is_valid():
             f.save()
             return HttpResponseRedirect(self.get_resource_url(ident))
-        # TODO: What happens if there are errors?
-        raise Exception('Model data errors are not handled yet.')
+        
+        # Otherwise return a 400 Bad Request error.
+        return self.responder.error(400, f.errors)
     
     def delete(self, request, ident):
         """
@@ -135,6 +151,6 @@ class ModelResource(Resource):
         try:
             resource_object = self.queryset.get(**{self.ident_field.name : ident})
         except self.queryset.model.DoesNotExist:
-            raise Http404
+            return self.responder.error(404)
         resource_object.delete()
         return HttpResponseRedirect(self.base_url)

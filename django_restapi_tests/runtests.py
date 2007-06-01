@@ -27,20 +27,39 @@ def runtests():
     
     http = httplib2.Http()
     
-    # Create poll
+    # Try to create poll with insufficient data
+    # (needs to fail)
     url = 'http://%s:%s/xml/polls/' % (host, port)
     params = urlencode({
-        'question' : 'Does this work',
+        'question' : 'Does this not work?',
+    })
+    headers, content = http.request(url, 'POST', params)
+    assert headers['status'] == '400', show_in_browser(content)
+    print 'Creating poll with insufficient data failed (ok)'
+        
+    # Create poll
+    params = urlencode({
+        'question' : 'Does this work?',
         'pub_date' : '2001-01-01'
     })
     headers, content = http.request(url, 'POST', params)
     assert headers['status'] == '302', show_in_browser(content)
     location = headers['location']
-    print location
     poll_id = int(re.findall("\d+", location)[0])
     print 'Created poll:', poll_id
     print 'Redirect to:', location
     
+    # Try to change poll with inappropriate data
+    # (needs to fail)
+    url = 'http://%s:%s/xml/polls/%d/' % (host, port, poll_id)
+    params = urlencode({
+        'question' : 'Yes, it works.',
+        'pub_date' : '2007-07-07-123'
+    })
+    headers, content = http.request(url, 'PUT', params)
+    assert headers['status'] == '400', show_in_browser(content)
+    print 'Changing poll with inappropriate data failed (ok)'
+        
     # Change poll
     url = 'http://%s:%s/xml/polls/%d/' % (host, port, poll_id)
     params = urlencode({
@@ -55,7 +74,7 @@ def runtests():
     # Read poll
     headers, content = http.request(url, 'GET')
     assert headers['status'] == '200', show_in_browser(content)
-    print content
+    # print content
     
     # Delete poll
     headers, content = http.request(url, 'DELETE')
@@ -67,7 +86,7 @@ def runtests():
     url = 'http://%s:%s/xml/choices/1/' % (host, port)
     headers, content = http.request(url, 'GET')
     assert headers['status'] == '200', show_in_browser(content)
-    print content
+    # print content
     
     # Try to delete choice (must fail)
     headers, content = http.request(url, 'DELETE')

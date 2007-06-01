@@ -7,6 +7,7 @@ views, ...).
 """
 from django.core import serializers
 from django.http import HttpResponse
+from django.newforms.util import ErrorDict
     
 class SerializeResponder(object):
     """
@@ -40,6 +41,21 @@ class SerializeResponder(object):
         # TODO: Include the resource urls of related resources?
         return HttpResponse(self.render([elem]), self.mimetype)
     
+    def error(self, status_code, error_dict=ErrorDict()):
+        """
+        Handles errors in a RESTful way.
+        - appropriate status code
+        - appropriate mimetype
+        - human-readable error message
+        """
+        response = HttpResponse(mimetype = self.mimetype)
+        response.write('Error %s' % status_code)
+        if error_dict:
+            response.write('\n\nErrors:\n')
+            response.write(error_dict.as_text())
+        response.status_code = status_code
+        return response
+    
     def list(self, queryset):
         """
         Renders a list of model objects to HttpResponse.
@@ -56,6 +72,9 @@ class JSONResponder(SerializeResponder):
     def __init__(self):
         SerializeResponder.__init__(self, 'json', 'application/json')
 
+    # def error(self, status_code, error_dict={}):
+        # TODO: Return JSON error message
+
 class XMLResponder(SerializeResponder):
     """
     XML data format class.
@@ -63,6 +82,10 @@ class XMLResponder(SerializeResponder):
     def __init__(self):
         SerializeResponder.__init__(self, 'xml', 'application/xml')
 
+    # def error(self, status_code, error_dict={}):
+        # TODO: Return XML error message, e.g.
+        # http://www.oreillynet.com/onlamp/blog/2003/12/restful_error_handling.html
+        
 #class TemplateResponder(object):
 #    def __init__(self, template_dir, paginate_by, template_loader,
 #                 extra_context, allow_empty, context_processors,

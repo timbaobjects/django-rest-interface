@@ -8,7 +8,7 @@ from polls.models import Poll, Choice
 poll_resource = ModelResource(
         queryset = Poll.objects.all(),
         permitted_methods = ('GET', 'POST', 'PUT', 'DELETE'),
-        expose_fields = ('id', 'question', 'pub_date'), # TODO
+        expose_fields = ('id', 'question', 'pub_date'),
         responder = XMLResponder(),
         base_url = r'xml/polls/'
 )
@@ -16,7 +16,7 @@ poll_resource = ModelResource(
 choice_resource = ModelResource(
         queryset = Choice.objects.all(),
         permitted_methods = ('GET',),
-        expose_fields = ('id', 'poll_id', 'choice'), # TODO
+        expose_fields = ('id', 'poll_id', 'choice'),
         responder = XMLResponder(),
         base_url = r'xml/choices/'
 )
