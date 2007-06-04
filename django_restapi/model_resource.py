@@ -83,6 +83,11 @@ class ModelResource(Resource):
             return self.base_url
         return '%s%s/' % (self.base_url, str(ident))
     
+    def dispatch(self, request,  ident=''):
+        # Remove queryset cache by cloning the queryset
+        self.queryset = self.queryset._clone()
+        return Resource.dispatch(self, request, ident)
+    
     def create(self, request):
         """
         Creates a resource with attributes given by POST, then
@@ -102,12 +107,13 @@ class ModelResource(Resource):
         # Otherwise return a 400 Bad Request error.
         return self.responder.error(400, f.errors)
     
-    def read(self, request, ident):
+    def read(self, request, ident=''):
         """
-        Returns a representation of the resource identified by 'ident'
-        in a format depending on which responder (e.g. JSONResponder)
-        was assigned to this ModelResource instance. Usually called by a
-        HTTP request to the resource URI with method GET.
+        Returns a representation of a single model if ident is given,
+        otherwise a representation of the queryset.
+        The format depends on which responder (e.g. JSONResponder)
+        is assigned to this ModelResource instance. Usually called by a
+        HTTP request to the resource/ URI with method GET.
         """
         if ident:
             try:

@@ -1,7 +1,7 @@
 """
 Generic resource class.
 """
-from django.http import Http404, HttpResponseNotAllowed, QueryDict
+from django.http import Http404, HttpResponseNotAllowed, HttpResponseBadRequest, QueryDict
 
 class Resource(object):
     """
@@ -44,6 +44,10 @@ class Resource(object):
         if request_method == 'GET':
             return self.read(request, ident)
         elif request_method == 'POST':
+            if ident:
+                # Can only POST to factory URI.
+                # Use PUT to modifiy individual resources.
+                return HttpResponseBadRequest()
             return self.create(request)
         elif request_method == 'PUT':
             # PUT and POST requests only differ in REQUEST_METHOD,
