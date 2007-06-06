@@ -22,7 +22,7 @@ class Resource(object):
         """
         self.permitted_methods = [op.upper() for op in permitted_methods]
         self.mimetype = mimetype
-        
+    
     def get_url_pattern(self, base_url):
         """
         Returns an url pattern that redirects any calls to /[base_url]/
@@ -32,7 +32,7 @@ class Resource(object):
         return (r'^%s(?:(?P<ident>\d+)/?)?$' % base_url,
                 'django_restapi.resource.dispatch', {'resource' : self})
     
-    def dispatch(self, request,  ident=''):
+    def dispatch(self, request):
         """
         Redirects to one of the CRUD methods depending 
         on the HTTP method of the request. Checks whether
@@ -42,37 +42,33 @@ class Resource(object):
         if request_method not in self.permitted_methods:
             return HttpResponseNotAllowed(self.permitted_methods)
         if request_method == 'GET':
-            return self.read(request, ident)
+            return self.read(request)
         elif request_method == 'POST':
-            if ident:
-                # Can only POST to factory URI.
-                # Use PUT to modifiy individual resources.
-                return HttpResponseBadRequest()
             return self.create(request)
         elif request_method == 'PUT':
             # PUT and POST requests only differ in REQUEST_METHOD,
-            # not in the way data is encoded. As with POST,
-            # files are stored in request.FILES.
+            # not in the way data is encoded.
+            # TODO: Handle FILES
             request.PUT = QueryDict(request.raw_post_data)
-            return self.update(request, ident)
+            return self.update(request)
         elif request_method == 'DELETE':
-            return self.delete(request, ident)
+            return self.delete(request)
         else:
             raise Http404
     
     # The four CRUD methods that any class that 
-    # inherits from Resource needs to implement:
+    # inherits from Resource may to implement:
     
     def create(self, request):
         raise Http404
     
-    def read(self, request, ident):
+    def read(self, request):
         raise Http404
     
-    def update(self, request, ident):
+    def update(self, request):
         raise Http404
     
-    def delete(self, request, ident):
+    def delete(self, request):
         raise Http404
 
 def dispatch(request, resource, ident=''):

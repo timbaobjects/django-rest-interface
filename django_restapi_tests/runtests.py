@@ -43,7 +43,7 @@ def runtests():
         'pub_date' : '2001-01-01'
     })
     headers, content = http.request(url, 'POST', params)
-    assert headers['status'] == '302', show_in_browser(content)
+    assert headers['status'] == '201', show_in_browser(content)
     location = headers['location']
     poll_id = int(re.findall("\d+", location)[0])
     print 'Created poll:', poll_id
@@ -67,7 +67,7 @@ def runtests():
         'pub_date' : '2007-07-07'
     })
     headers, content = http.request(url, 'PUT', params)
-    assert headers['status'] == '302', show_in_browser(content)
+    assert headers['status'] == '200', show_in_browser(content)
     print 'Updated poll:', poll_id
     print 'Redirect to:', headers['location']
     

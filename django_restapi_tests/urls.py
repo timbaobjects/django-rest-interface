@@ -1,24 +1,24 @@
 from django.conf.urls.defaults import *
-from django_restapi.model_resource import ModelResource
+from django_restapi.model_resource import Collection
 from django_restapi.responder import XMLResponder
 from polls.models import Poll, Choice
 
 # Poll API urls
 
-poll_resource = ModelResource(
+poll_resource = Collection(
         queryset = Poll.objects.all(),
         permitted_methods = ('GET', 'POST', 'PUT', 'DELETE'),
         expose_fields = ('id', 'question', 'pub_date'),
         responder = XMLResponder(),
-        base_url = r'xml/polls/'
+        url = r'xml/polls/'
 )
 
-choice_resource = ModelResource(
+choice_resource = Collection(
         queryset = Choice.objects.all(),
         permitted_methods = ('GET',),
         expose_fields = ('id', 'poll_id', 'choice'),
         responder = XMLResponder(),
-        base_url = r'xml/choices/'
+        url = r'xml/choices/'
 )
 
 urlpatterns = patterns('',
