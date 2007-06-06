@@ -27,73 +27,75 @@ def runtests():
     
     http = httplib2.Http()
     
-    # Try to create poll with insufficient data
-    # (needs to fail)
-    url = 'http://%s:%s/xml/polls/' % (host, port)
-    params = urlencode({
-        'question' : 'Does this not work?',
-    })
-    headers, content = http.request(url, 'POST', params)
-    assert headers['status'] == '400', show_in_browser(content)
-    print 'Creating poll with insufficient data failed (ok)'
+    for format in ['xml', 'html']:
+    
+        # Try to create poll with insufficient data
+        # (needs to fail)
+        url = 'http://%s:%s/%s/polls/' % (host, port, format)
+        params = urlencode({
+            'question' : 'Does this not work?',
+        })
+        headers, content = http.request(url, 'POST', params)
+        assert headers['status'] == '400', show_in_browser(content)
+        print 'Creating poll with insufficient data failed (ok)'
+            
+        # Create poll
+        params = urlencode({
+            'question' : 'Does this work?',
+            'pub_date' : '2001-01-01'
+        })
+        headers, content = http.request(url, 'POST', params)
+        assert headers['status'] == '201', show_in_browser(content)
+        location = headers['location']
+        poll_id = int(re.findall("\d+", location)[0])
+        print 'Created poll:', poll_id
+        print 'Redirect to:', location
         
-    # Create poll
-    params = urlencode({
-        'question' : 'Does this work?',
-        'pub_date' : '2001-01-01'
-    })
-    headers, content = http.request(url, 'POST', params)
-    assert headers['status'] == '201', show_in_browser(content)
-    location = headers['location']
-    poll_id = int(re.findall("\d+", location)[0])
-    print 'Created poll:', poll_id
-    print 'Redirect to:', location
-    
-    # Try to change poll with inappropriate data
-    # (needs to fail)
-    url = 'http://%s:%s/xml/polls/%d/' % (host, port, poll_id)
-    params = urlencode({
-        'question' : 'Yes, it works.',
-        'pub_date' : '2007-07-07-123'
-    })
-    headers, content = http.request(url, 'PUT', params)
-    assert headers['status'] == '400', show_in_browser(content)
-    print 'Changing poll with inappropriate data failed (ok)'
+        # Try to change poll with inappropriate data
+        # (needs to fail)
+        url = 'http://%s:%s/%s/polls/%d/' % (host, port, format, poll_id)
+        params = urlencode({
+            'question' : 'Yes, it works.',
+            'pub_date' : '2007-07-07-123'
+        })
+        headers, content = http.request(url, 'PUT', params)
+        assert headers['status'] == '400', show_in_browser(content)
+        print 'Changing poll with inappropriate data failed (ok)'
+            
+        # Change poll
+        url = 'http://%s:%s/%s/polls/%d/' % (host, port, format, poll_id)
+        params = urlencode({
+            'question' : 'Yes, it works.',
+            'pub_date' : '2007-07-07'
+        })
+        headers, content = http.request(url, 'PUT', params)
+        assert headers['status'] == '200', show_in_browser(content)
+        print 'Updated poll:', poll_id
+        print 'Redirect to:', headers['location']
         
-    # Change poll
-    url = 'http://%s:%s/xml/polls/%d/' % (host, port, poll_id)
-    params = urlencode({
-        'question' : 'Yes, it works.',
-        'pub_date' : '2007-07-07'
-    })
-    headers, content = http.request(url, 'PUT', params)
-    assert headers['status'] == '200', show_in_browser(content)
-    print 'Updated poll:', poll_id
-    print 'Redirect to:', headers['location']
+        # Read poll
+        headers, content = http.request(url, 'GET')
+        assert headers['status'] == '200', show_in_browser(content)
+        # print content
+        
+        # Delete poll
+        headers, content = http.request(url, 'DELETE')
+        assert headers['status'] == '302', show_in_browser(content)
+        print 'Deleted poll:', poll_id
+        print 'Redirect to:', headers['location']
+        
+        # Read choice
+        url = 'http://%s:%s/%s/choices/1/' % (host, port, format)
+        headers, content = http.request(url, 'GET')
+        assert headers['status'] == '200', show_in_browser(content)
+        # print content
+        
+        # Try to delete choice (must fail)
+        headers, content = http.request(url, 'DELETE')
+        assert headers['status'] == '405', headers
+        print 'No permission to delete choice 1 (ok).'
     
-    # Read poll
-    headers, content = http.request(url, 'GET')
-    assert headers['status'] == '200', show_in_browser(content)
-    # print content
-    
-    # Delete poll
-    headers, content = http.request(url, 'DELETE')
-    assert headers['status'] == '302', show_in_browser(content)
-    print 'Deleted poll:', poll_id
-    print 'Redirect to:', headers['location']
-    
-    # Read choice
-    url = 'http://%s:%s/xml/choices/1/' % (host, port)
-    headers, content = http.request(url, 'GET')
-    assert headers['status'] == '200', show_in_browser(content)
-    # print content
-    
-    # Try to delete choice (must fail)
-    headers, content = http.request(url, 'DELETE')
-    assert headers['status'] == '405', headers
-    print 'No permission to delete choice 1 (ok).'
-
-    print 'All tests succeeded.'
+        print 'All %s tests succeeded.' % format
 
 if __name__ == '__main__':
     runtests()

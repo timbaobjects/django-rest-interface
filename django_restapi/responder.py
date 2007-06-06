@@ -8,7 +8,11 @@ views, ...).
 from django.core import serializers
 from django.http import HttpResponse
 from django.newforms.util import ErrorDict
-    
+from django.template import loader
+from django.views.generic import list_detail
+from django.views.generic.simple import direct_to_template
+from django.db.models.query import QuerySet
+
 class SerializeResponder(object):
     """
     Class for all data formats that are possible
@@ -34,14 +38,14 @@ class SerializeResponder(object):
         """
         return serializers.serialize(self.format, queryset)
     
-    def element(self, elem):
+    def element(self, request, elem):
         """
         Renders single model objects to HttpResponse.
         """
         # TODO: Include the resource urls of related resources?
         return HttpResponse(self.render([elem]), self.mimetype)
     
-    def error(self, status_code, error_dict=ErrorDict()):
+    def error(self, request, status_code, error_dict=ErrorDict()):
         """
         Handles errors in a RESTful way.
         - appropriate status code
@@ -56,7 +60,7 @@ class SerializeResponder(object):
         response.status_code = status_code
         return response
     
-    def list(self, queryset):
+    def list(self, request, queryset):
         """
         Renders a list of model objects to HttpResponse.
         """
@@ -85,17 +89,62 @@ class XMLResponder(SerializeResponder):
     # def error(self, status_code, error_dict={}):
         # TODO: Return XML error message, e.g.
         # http://www.oreillynet.com/onlamp/blog/2003/12/restful_error_handling.html
+
+class TemplateResponder(object):
+    """
+    Data format class that uses Django's generic views.
+    """
+    def __init__(self, template_dir, paginate_by=None, template_loader=loader,
+                 extra_context=None, allow_empty=False, context_processors=None,
+                 template_object_name='object', mimetype=None):
+        self.template_dir = template_dir
+        self.paginate_by = paginate_by
+        self.template_loader = template_loader
+        self.extra_context = extra_context
+        self.allow_empty = allow_empty
+        self.context_processors = context_processors
+        self.template_object_name = template_object_name
+        self.mimetype = mimetype
+    
+    def list(self, request, queryset, page=1):
+        template_name = '%s/%s_list.html' % (self.template_dir, queryset.model._meta.module_name)
+        return list_detail.object_list(request,
+            queryset = queryset,
+            paginate_by = self.paginate_by,
+            template_name = template_name,
+            template_loader = self.template_loader,
+            extra_context = self.extra_context,
+            allow_empty = self.allow_empty,
+            context_processors = self.context_processors,
+            template_object_name = self.template_object_name,
+            mimetype = self.mimetype
+        )
         
-#class TemplateResponder(object):
-#    def __init__(self, template_dir, paginate_by, template_loader,
-#                 extra_context, allow_empty, context_processors,
-#                 template_object_name, mimetype):
-#        pass
-#    def list(self, queryset):
-#        pass
-#    def element(self, queryset):
-#        pass
-#    def get_create_form(self):
-#        pass
-#    def get_update_form(self):
-#        pass
+    def element(self, request, elem):
+        template_name = '%s/%s_detail.html' % (self.template_dir, elem._meta.module_name)
+        q = QuerySet(elem.__class__)
+        q._result_cache = [elem]
+        return list_detail.object_detail(request,
+            queryset = q,
+            object_id = elem.id,
+            template_name = template_name,
+            template_loader = self.template_loader,
+            extra_context = self.extra_context,
+            context_processors = self.context_processors,
+            template_object_name = self.template_object_name,
+            mimetype = self.mimetype
+        )
+    
+    def error(self, request, status_code, error_dict=ErrorDict()):
+        response = direct_to_template(request, 
+            template = '%s/%s.html' % (self.template_dir, str(status_code)),
+            extra_context = { 'errors' : error_dict },
+            mimetype = self.mimetype)
+        response.status_code = status_code
+        return response
+    
+    #def get_create_form(self):
+    #    pass
+    
+    #def get_update_form(self):
+    #    pass

@@ -6,9 +6,7 @@ from django.http import Http404, HttpResponseNotAllowed, HttpResponseBadRequest,
 class Resource(object):
     """
     Generic resource class that can be used for
-    resources that are not based on Django models
-    and is the basis for the model_resource.ModelResource
-    class.
+    resources that are not based on Django models.
     """
     def __init__(self, permitted_methods, mimetype=None):
         """

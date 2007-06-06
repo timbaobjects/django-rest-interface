@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from datetime import datetime
 from random import randint
+import os
 
 INSTALLED_APPS = (
     'django.contrib.admin',
@@ -26,7 +27,8 @@ def runserver(addr='localhost', port='8000'):
        DATABASE_NAME=':memory:', 
        DATABASE_ENGINE='sqlite3',
        ROOT_URLCONF = ROOT_URLCONF,
-       INSTALLED_APPS = INSTALLED_APPS
+       INSTALLED_APPS = INSTALLED_APPS,
+       TEMPLATE_DIRS = (os.path.join(os.path.split(os.path.abspath(__file__))[0], 'templates'),)
     )
     
     # Reload DB module

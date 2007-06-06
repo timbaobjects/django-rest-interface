@@ -1,11 +1,11 @@
 from django.conf.urls.defaults import *
 from django_restapi.model_resource import Collection
-from django_restapi.responder import XMLResponder
+from django_restapi.responder import XMLResponder, TemplateResponder
 from polls.models import Poll, Choice
 
-# Poll API urls
+# XML Poll API urls
 
-poll_resource = Collection(
+xml_poll_resource = Collection(
         queryset = Poll.objects.all(),
         permitted_methods = ('GET', 'POST', 'PUT', 'DELETE'),
         expose_fields = ('id', 'question', 'pub_date'),
@@ -13,7 +13,7 @@ poll_resource = Collection(
         url = r'xml/polls/'
 )
 
-choice_resource = Collection(
+xml_choice_resource = Collection(
         queryset = Choice.objects.all(),
         permitted_methods = ('GET',),
         expose_fields = ('id', 'poll_id', 'choice'),
@@ -21,9 +21,37 @@ choice_resource = Collection(
         url = r'xml/choices/'
 )
 
+# Template API urls
+
+template_poll_resource = Collection(
+        queryset = Poll.objects.all(),
+        permitted_methods = ('GET', 'POST', 'PUT', 'DELETE'),
+        expose_fields = ('id', 'question', 'pub_date'),
+        responder = TemplateResponder(
+            template_dir = 'polls',
+            template_object_name = 'poll',
+            paginate_by = 10
+        ),
+        url = r'html/polls/'
+)
+
+template_choice_resource = Collection(
+        queryset = Choice.objects.all(),
+        permitted_methods = ('GET',),
+        expose_fields = ('id', 'poll_id', 'choice'),
+        responder = TemplateResponder(
+            template_dir = 'polls',
+            template_object_name = 'choice',
+            paginate_by = 10
+        ),
+        url = r'html/choices/'
+)
+
 urlpatterns = patterns('',
-    poll_resource.get_url_pattern(),
-    choice_resource.get_url_pattern(),
+    xml_poll_resource.get_url_pattern(),
+    xml_choice_resource.get_url_pattern(),
+    template_poll_resource.get_url_pattern(),
+    template_choice_resource.get_url_pattern(),
    ( r'^admin/', include('django.contrib.admin.urls')),
 )
 

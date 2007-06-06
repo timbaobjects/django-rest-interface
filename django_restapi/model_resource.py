@@ -110,7 +110,7 @@ class Collection:
             return response
         
         # Otherwise return a 400 Bad Request error.
-        return self.responder.error(400, f.errors)
+        return self.responder.error(request, 400, f.errors)
     
     def read(self, request):
         """
@@ -119,7 +119,7 @@ class Collection:
         is assigned to this ModelResource instance. Usually called by a
         HTTP request to the factory URI with method GET.
         """
-        return self.responder.list(self.queryset)
+        return self.responder.list(request, self.queryset)
     
     def get_entry(self, ident):
         """
@@ -178,7 +178,7 @@ class Entry:
         is assigned to this ModelResource instance. Usually called by a
         HTTP request to the resource/ URI with method GET.
         """
-        return self.collection.responder.element(self.model)
+        return self.collection.responder.element(request, self.model)
     
     def update(self, request):
         """
@@ -202,7 +202,7 @@ class Entry:
             return response
         
         # Otherwise return a 400 Bad Request error.
-        return self.collection.responder.error(400, f.errors)
+        return self.collection.responder.error(request, 400, f.errors)
     
     def delete(self, request):
         """

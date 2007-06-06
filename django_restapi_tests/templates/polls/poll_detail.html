@@ -1,0 +1,18 @@
+<html>
+
+	<head>
+		<title>Poll: {{ poll.question }}</title>
+	</head>
+	
+	<body>
+		<h1>Poll: {{ poll.question }}</h1>
+		<p>Date: {{ poll.pub_date|date:"r" }}</p>
+		<p>Choices:</p>
+		<ol>
+		{% for choice in poll.choice_set.all %}
+			<li><a href="../../choices/{{ choice.id }}/">{{ choice }}</a></li>
+		{% endfor %}
+		</ol>
+	</body>
+	
+</html>
