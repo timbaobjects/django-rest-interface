@@ -6,45 +6,45 @@ from polls.models import Poll, Choice
 # XML Poll API urls
 
 xml_poll_resource = Collection(
-        queryset = Poll.objects.all(),
-        permitted_methods = ('GET', 'POST', 'PUT', 'DELETE'),
-        expose_fields = ('id', 'question', 'pub_date'),
-        responder = XMLResponder(),
-        url = r'xml/polls/'
+    queryset = Poll.objects.all(),
+    permitted_methods = ('GET', 'POST', 'PUT', 'DELETE'),
+    expose_fields = ('id', 'question', 'pub_date'),
+    responder = XMLResponder(paginate_by = 10),
+    url = r'xml/polls/'
 )
 
 xml_choice_resource = Collection(
-        queryset = Choice.objects.all(),
-        permitted_methods = ('GET',),
-        expose_fields = ('id', 'poll_id', 'choice'),
-        responder = XMLResponder(),
-        url = r'xml/choices/'
+    queryset = Choice.objects.all(),
+    permitted_methods = ('GET',),
+    expose_fields = ('id', 'poll_id', 'choice'),
+    responder = XMLResponder(paginate_by = 5),
+    url = r'xml/choices/'
 )
 
 # Template API urls
 
 template_poll_resource = Collection(
-        queryset = Poll.objects.all(),
-        permitted_methods = ('GET', 'POST', 'PUT', 'DELETE'),
-        expose_fields = ('id', 'question', 'pub_date'),
-        responder = TemplateResponder(
-            template_dir = 'polls',
-            template_object_name = 'poll',
-            paginate_by = 10
-        ),
-        url = r'html/polls/'
+    queryset = Poll.objects.all(),
+    permitted_methods = ('GET', 'POST', 'PUT', 'DELETE'),
+    expose_fields = ('id', 'question', 'pub_date'),
+    responder = TemplateResponder(
+        template_dir = 'polls',
+        template_object_name = 'poll',
+        paginate_by = 10
+    ),
+    url = r'html/polls/'
 )
 
 template_choice_resource = Collection(
-        queryset = Choice.objects.all(),
-        permitted_methods = ('GET',),
-        expose_fields = ('id', 'poll_id', 'choice'),
-        responder = TemplateResponder(
-            template_dir = 'polls',
-            template_object_name = 'choice',
-            paginate_by = 10
-        ),
-        url = r'html/choices/'
+    queryset = Choice.objects.all(),
+    permitted_methods = ('GET',),
+    expose_fields = ('id', 'poll_id', 'choice'),
+    responder = TemplateResponder(
+        template_dir = 'polls',
+        template_object_name = 'choice',
+        paginate_by = 5
+    ),
+    url = r'html/choices/'
 )
 
 urlpatterns = patterns('',

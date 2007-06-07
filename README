@@ -4,8 +4,8 @@ A) The REST interface: django_restapi
 
 resource.Resource is the generic class for REST resources. Use 
 this class for resources that don't necessarily map 1:1 to Django
-models. model_resource.ModelResource is an  example of it in
-use. Use it when resources map directly to Django models.
+models. model_resource.Collection and model_resource.Entry are
+specific implementations that map resources 1:1 to Django models.
 
 responder contains classes you can use to choose which type of 
 output format ModelResource returns. For instance, add

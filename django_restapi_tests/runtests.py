@@ -28,7 +28,29 @@ def runtests():
     http = httplib2.Http()
     
     for format in ['xml', 'html']:
-    
+        
+        # Get list of polls
+        url = 'http://%s:%s/%s/polls/' % (host, port, format)
+        headers, content = http.request(url, 'GET')
+        assert headers['status'] == '200', show_in_browser(content)
+        print 'Got list of polls.'
+
+        # Get list of choices
+        url = 'http://%s:%s/%s/choices/' % (host, port, format)
+        headers, content = http.request(url, 'GET')
+        assert headers['status'] == '200', show_in_browser(content)
+        print 'Got first page of choices.'
+        
+        # Second page of choices must exist.
+        headers, content = http.request('%s?page=2' % url, 'GET')
+        assert headers['status'] == '200', show_in_browser(content)
+        print 'Got second page of polls.'
+                
+        # Third page must not exist.
+        headers, content = http.request('%s?page=3' % url, 'GET')
+        assert headers['status'] == '404', show_in_browser(content)
+        print 'Got 404 for third page of polls (ok).'
+                
         # Try to create poll with insufficient data
         # (needs to fail)
         url = 'http://%s:%s/%s/polls/' % (host, port, format)
@@ -95,7 +117,7 @@ def runtests():
         assert headers['status'] == '405', headers
         print 'No permission to delete choice 1 (ok).'
     
-        print 'All %s tests succeeded.' % format
+        print 'All %s tests succeeded.\n' % format
 
 if __name__ == '__main__':
     runtests()
