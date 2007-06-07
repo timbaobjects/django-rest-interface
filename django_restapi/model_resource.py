@@ -5,7 +5,7 @@ from django import newforms as forms
 from django.db.models.fields import AutoField, CharField, IntegerField, \
          PositiveIntegerField, SlugField, SmallIntegerField
 from django.http import *
-from resource import Resource
+from resource import Resource, load_put_and_files
 
 class InvalidURLField(Exception):
     """
@@ -72,10 +72,7 @@ class Collection:
             if request_method == 'GET':
                 return entry.read(request)
             elif request_method == 'PUT':
-                # PUT and POST requests only differ in REQUEST_METHOD,
-                # not in the way data is encoded.
-                # TODO: Handle FILES
-                request.PUT = QueryDict(request.raw_post_data)
+                load_put_and_files(request)
                 return entry.update(request)
             elif request_method == 'DELETE':
                 return entry.delete(request)

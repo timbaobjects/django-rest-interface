@@ -3,6 +3,20 @@ Generic resource class.
 """
 from django.http import Http404, HttpResponseNotAllowed, HttpResponseBadRequest, QueryDict
 
+def load_put_and_files(request):
+    """
+    Populates request.PUT and request.FILES from
+    request.raw_post_data. PUT and POST requests differ 
+    only in REQUEST_METHOD, not in the way data is encoded. 
+    Therefore we can use Django's POST data retrieval method 
+    for PUT.
+    """
+    if request.method == 'PUT':
+        request.method = 'POST'
+        request._load_post_and_files()
+        request.PUT = request.POST
+        request.method = 'PUT'
+
 class Resource(object):
     """
     Generic resource class that can be used for
@@ -44,10 +58,7 @@ class Resource(object):
         elif request_method == 'POST':
             return self.create(request)
         elif request_method == 'PUT':
-            # PUT and POST requests only differ in REQUEST_METHOD,
-            # not in the way data is encoded.
-            # TODO: Handle FILES
-            request.PUT = QueryDict(request.raw_post_data)
+            load_put_and_files(request)
             return self.update(request)
         elif request_method == 'DELETE':
             return self.delete(request)
