@@ -6,13 +6,12 @@ the objects of a ModelResource instance are rendered
 views, ...).
 """
 from django.core import serializers
-from django.http import HttpResponse
-from django.newforms.util import ErrorDict
-from django.template import loader
-from django.views.generic import list_detail
-from django.views.generic.simple import direct_to_template
-from django.db.models.query import QuerySet
 from django.core.paginator import ObjectPaginator, InvalidPage
+from django.core.xheaders import populate_xheaders
+from django.http import Http404, HttpResponse
+from django.newforms.util import ErrorDict
+from django.template import loader, RequestContext
+from django.views.generic.simple import direct_to_template
 
 class SerializeResponder(object):
     """
@@ -117,7 +116,7 @@ class TemplateResponder(object):
     Data format class that uses Django's generic views.
     """
     def __init__(self, template_dir, paginate_by=None, template_loader=loader,
-                 extra_context=None, allow_empty=False, context_processors=None,
+                 extra_context={}, allow_empty=False, context_processors=None,
                  template_object_name='object', mimetype=None):
         self.template_dir = template_dir
         self.paginate_by = paginate_by
@@ -130,33 +129,61 @@ class TemplateResponder(object):
     
     def list(self, request, queryset, page=None):
         template_name = '%s/%s_list.html' % (self.template_dir, queryset.model._meta.module_name)
-        return list_detail.object_list(request,
-            queryset = queryset,
-            paginate_by = self.paginate_by,
-            template_name = template_name,
-            template_loader = self.template_loader,
-            extra_context = self.extra_context,
-            allow_empty = self.allow_empty,
-            context_processors = self.context_processors,
-            template_object_name = self.template_object_name,
-            mimetype = self.mimetype
-        )
+        if self.paginate_by:
+            paginator = ObjectPaginator(queryset, self.paginate_by)
+            if not page:
+                page = request.GET.get('page', 1)
+            try:
+                page = int(page)
+                object_list = paginator.get_page(page - 1)
+            except (InvalidPage, ValueError):
+                if page == 1 and self.allow_empty:
+                    object_list = []
+                else:
+                    raise Http404
+            c = RequestContext(request, {
+                '%s_list' % self.template_object_name: queryset,
+                'is_paginated': paginator.pages > 1,
+                'results_per_page': self.paginate_by,
+                'has_next': paginator.has_next_page(page - 1),
+                'has_previous': paginator.has_previous_page(page - 1),
+                'page': page,
+                'next': page + 1,
+                'previous': page - 1,
+                'last_on_page': paginator.last_on_page(page - 1),
+                'first_on_page': paginator.first_on_page(page - 1),
+                'pages': paginator.pages,
+                'hits' : paginator.hits,
+            }, self.context_processors)
+        else:
+            c = RequestContext(request, {
+                '%s_list' % self.template_object_name: queryset,
+                'is_paginated': False
+            }, self.context_processors)
+            if not self.allow_empty and len(queryset) == 0:
+                raise Http404
+        for key, value in self.extra_context.items():
+            if callable(value):
+                self.extra_context[key] = value()
+        c.update(self.extra_context)
+        t = self.template_loader.get_template(template_name)
+        return HttpResponse(t.render(c), mimetype=self.mimetype)
+
         
     def element(self, request, elem):
         template_name = '%s/%s_detail.html' % (self.template_dir, elem._meta.module_name)
-        # Construct QuerySet from single model object:
-        q = QuerySet(elem.__class__)
-        q._result_cache = [elem]
-        return list_detail.object_detail(request,
-            queryset = q,
-            object_id = elem.id,
-            template_name = template_name,
-            template_loader = self.template_loader,
-            extra_context = self.extra_context,
-            context_processors = self.context_processors,
-            template_object_name = self.template_object_name,
-            mimetype = self.mimetype
-        )
+        t = self.template_loader.get_template(template_name)
+        c = RequestContext(request, {
+            self.template_object_name : elem,
+        }, self.context_processors)
+        for key, value in self.extra_context.items():
+            if callable(value):
+                self.extra_context[key] = value()
+        c.update(self.extra_context)
+        response = HttpResponse(t.render(c), mimetype=self.mimetype)
+        populate_xheaders(request, response, elem.__class__, getattr(elem, elem._meta.pk.name))
+        return response
+
     
     def error(self, request, status_code, error_dict=ErrorDict()):
         response = direct_to_template(request, 

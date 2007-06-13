@@ -5,7 +5,7 @@ from django import newforms as forms
 from django.db.models.fields import AutoField, CharField, IntegerField, \
          PositiveIntegerField, SlugField, SmallIntegerField
 from django.http import *
-from resource import Resource, load_put_and_files
+from resource import load_put_and_files
 
 class InvalidURLField(Exception):
     """
@@ -208,6 +208,7 @@ class Entry:
         resource URI with method DELETE.
         """
         self.model.delete()
+        
         return HttpResponseRedirect(self.collection.url)
     
 
