@@ -51,7 +51,7 @@ def runserver(addr='localhost', port='8000'):
     from django.contrib.auth.create_superuser import createsuperuser
     from polls.models import Poll, Choice
     for (question, answers) in TEST_DATA:
-        p = Poll(question=question, pub_date=datetime.now())
+        p = Poll(question=question, password="secret", pub_date=datetime.now())
         p.save()
         for answer in answers:
             c = Choice(poll=p, choice=answer, votes=randint(5, 50))

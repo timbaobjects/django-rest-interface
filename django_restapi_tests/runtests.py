@@ -33,6 +33,7 @@ def runtests():
         url = 'http://%s:%s/%s/polls/' % (host, port, format)
         headers, content = http.request(url, 'GET')
         assert headers['status'] == '200', show_in_browser(content)
+        assert content.find('secret') == -1
         print 'Got list of polls.'
 
         # Get list of choices
@@ -64,6 +65,7 @@ def runtests():
         # Create poll
         params = urlencode({
             'question' : 'Does this work?',
+            'password' : 'secret',
             'pub_date' : '2001-01-01'
         })
         headers, content = http.request(url, 'POST', params)
@@ -78,6 +80,7 @@ def runtests():
         url = 'http://%s:%s/%s/polls/%d/' % (host, port, format, poll_id)
         params = urlencode({
             'question' : 'Yes, it works.',
+            'password' : 'newsecret',
             'pub_date' : '2007-07-07-123'
         })
         headers, content = http.request(url, 'PUT', params)
@@ -88,6 +91,7 @@ def runtests():
         url = 'http://%s:%s/%s/polls/%d/' % (host, port, format, poll_id)
         params = urlencode({
             'question' : 'Yes, it works.',
+            'password' : 'newsecret',
             'pub_date' : '2007-07-07'
         })
         headers, content = http.request(url, 'PUT', params)
@@ -98,6 +102,7 @@ def runtests():
         # Read poll
         headers, content = http.request(url, 'GET')
         assert headers['status'] == '200', show_in_browser(content)
+        assert content.find('secret') == -1
         # print content
         
         # Delete poll

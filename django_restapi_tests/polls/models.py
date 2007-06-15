@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 
 class Poll(models.Model):
     question = models.CharField(maxlength=200)
+    password = models.CharField(maxlength=200)
     pub_date = models.DateTimeField(_('date published'))
     class Admin:
         pass

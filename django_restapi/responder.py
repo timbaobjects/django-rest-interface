@@ -34,12 +34,18 @@ class SerializeResponder(object):
         self.mimetype = mimetype
         self.paginate_by = paginate_by
         self.allow_empty = allow_empty
+        self.expose_fields = []
         
     def render(self, object_list):
         """
         Serializes a queryset to the format specified in
         self.format.
         """
+        # Hide unexposed fields
+        for object in list(object_list):
+            for field in object._meta.fields:
+                if not field.name in self.expose_fields:
+                    field.serialize = False
         return serializers.serialize(self.format, object_list)
     
     def element(self, request, elem):
@@ -127,6 +133,15 @@ class TemplateResponder(object):
         self.template_object_name = template_object_name
         self.mimetype = mimetype
     
+    def _restrict_fields(self, obj, allowed_fields):
+        """
+        Remove fields from a model that should not be public.
+        """
+        for field in obj._meta.fields:
+            if not field.name in allowed_fields and \
+               not field.name + '_id' in allowed_fields:
+                obj.__dict__.pop(field.name)    
+
     def list(self, request, queryset, page=None):
         template_name = '%s/%s_list.html' % (self.template_dir, queryset.model._meta.module_name)
         if self.paginate_by:
@@ -142,7 +157,7 @@ class TemplateResponder(object):
                 else:
                     raise Http404
             c = RequestContext(request, {
-                '%s_list' % self.template_object_name: queryset,
+                '%s_list' % self.template_object_name: object_list,
                 'is_paginated': paginator.pages > 1,
                 'results_per_page': self.paginate_by,
                 'has_next': paginator.has_next_page(page - 1),
@@ -156,12 +171,16 @@ class TemplateResponder(object):
                 'hits' : paginator.hits,
             }, self.context_processors)
         else:
+            object_list = queryset
             c = RequestContext(request, {
-                '%s_list' % self.template_object_name: queryset,
+                '%s_list' % self.template_object_name: object_list,
                 'is_paginated': False
             }, self.context_processors)
             if not self.allow_empty and len(queryset) == 0:
                 raise Http404
+        # Hide unexposed fields
+        for obj in object_list:
+            self._restrict_fields(obj, self.expose_fields)
         for key, value in self.extra_context.items():
             if callable(value):
                 self.extra_context[key] = value()
@@ -176,6 +195,8 @@ class TemplateResponder(object):
         c = RequestContext(request, {
             self.template_object_name : elem,
         }, self.context_processors)
+        # Hide unexposed fields
+        self._restrict_fields(elem, self.expose_fields)
         for key, value in self.extra_context.items():
             if callable(value):
                 self.extra_context[key] = value()

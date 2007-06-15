@@ -46,10 +46,11 @@ class Collection:
         """
         self.queryset = queryset
         self.permitted_methods = [op.upper() for op in permitted_methods]
-        self.responder = responder
-        self.expose_fields = expose_fields # TODO: Use expose_fields
         self.url = url
         self.ident_field = self.queryset.model._meta.get_field(ident_field_name)
+        self.expose_fields = expose_fields
+        self.responder = responder
+        responder.expose_fields = self.expose_fields
     
     def dispatch(self, request,  ident=''):
         """

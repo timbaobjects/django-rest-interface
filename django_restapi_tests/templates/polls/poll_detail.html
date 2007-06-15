@@ -7,6 +7,7 @@
 	<body>
 		<h1>Poll: {{ poll.question }}</h1>
 		<p>Date: {{ poll.pub_date|date:"r" }}</p>
+		<p>Password: {{ poll.password }} (should not be visible)</p>
 		<p>Choices:</p>
 		<ol>
 		{% for choice in poll.choice_set.all %}
