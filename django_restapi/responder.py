@@ -132,6 +132,7 @@ class TemplateResponder(object):
         self.context_processors = context_processors
         self.template_object_name = template_object_name
         self.mimetype = mimetype
+        self.expose_fields = None # Set by Collection.__init__
     
     def _restrict_fields(self, obj, allowed_fields):
         """

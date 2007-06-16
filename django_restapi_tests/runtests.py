@@ -122,6 +122,47 @@ def runtests():
         print 'No permission to delete choice 1 (ok).'
     
         print 'All %s tests succeeded.\n' % format
+    
+    # Test different URL patterns
+    url = 'http://%s:%s/json/polls/' % (host, port)
+    headers, content = http.request(url, 'GET')
+    assert headers['status'] == '200', show_in_browser(content)
+    assert content.find('secret') == -1
+    print 'Got list of polls.'
+    
+    # Get poll
+    url = 'http://%s:%s/json/polls/1/' % (host, port)
+    headers, content = http.request(url, 'GET')
+    assert headers['status'] == '200', show_in_browser(content)
+    assert content.find('secret') == -1
+    print 'Got first poll.'    
+
+    # Get filtered list of choices
+    url = 'http://%s:%s/json/polls/1/choices/' % (host, port)
+    headers, content = http.request(url, 'GET')
+    assert len(eval(content)) == 3
+    assert headers['status'] == '200', show_in_browser(content)
+    assert content.find('secret') == -1
+    print 'Got list of choices for poll #1.'    
+
+    # Get choice
+    url = 'http://%s:%s/json/polls/1/choices/1/' % (host, port)
+    headers, content = http.request(url, 'GET')
+    assert headers['status'] == '200', show_in_browser(content)
+    assert content.find('secret') == -1
+    print 'Got first choice for poll #1.'    
+    
+    # Get choice (failure)
+    url = 'http://%s:%s/json/polls/1/choices/12/' % (host, port)
+    headers, content = http.request(url, 'GET')
+    assert headers['status'] == '404', show_in_browser(content)
+    assert content.find('secret') == -1
+    print 'Attempt to get 12th choice for poll #1 failed (ok).'
+    
+    # TODO: Update/delete tests
+    
+    print 'Tests for different URL pattern succeeded.\n'
+
 
 if __name__ == '__main__':
     runtests()
