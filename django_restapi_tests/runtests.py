@@ -107,9 +107,8 @@ def runtests():
         
         # Delete poll
         headers, content = http.request(url, 'DELETE')
-        assert headers['status'] == '302', show_in_browser(content)
+        assert headers['status'] == '200', show_in_browser(content)
         print 'Deleted poll:', poll_id
-        print 'Redirect to:', headers['location']
         
         # Read choice
         url = 'http://%s:%s/%s/choices/1/' % (host, port, format)

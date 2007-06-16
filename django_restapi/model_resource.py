@@ -5,6 +5,7 @@ from django import newforms as forms
 from django.db.models.fields import AutoField, CharField, IntegerField, \
          PositiveIntegerField, SlugField, SmallIntegerField
 from django.http import *
+from django.newforms.util import ErrorDict
 from resource import load_put_and_files
 
 class InvalidURLField(Exception):
@@ -14,6 +15,14 @@ class InvalidURLField(Exception):
     against a regular expression.
     """
     pass
+
+class InvalidModelData(Exception):
+    """
+    Raised if create/update fails because the PUT/POST 
+    data is not appropriate.
+    """
+    def __init__(self, errors=ErrorDict()):
+        self.errors = errors
 
 class Collection:
     """
@@ -57,6 +66,7 @@ class Collection:
         Redirects to one of the CRUD methods depending 
         on the HTTP method of the request. Checks whether
         the requested method is allowed for this resource.
+        Catches errors.
         """
         # Check permission
         request_method = request.method.upper()
@@ -67,21 +77,28 @@ class Collection:
         self.queryset = self.queryset._clone()
 
         # Redirect either to entry method
-        # or to collection method
-        if ident:
-            entry = self.get_entry(ident)
-            if request_method == 'GET':
-                return entry.read(request)
-            elif request_method == 'PUT':
-                load_put_and_files(request)
-                return entry.update(request)
-            elif request_method == 'DELETE':
-                return entry.delete(request)
-        else:
-            if request_method == 'GET':
-                return self.read(request)
-            elif request_method == 'POST':
-                return self.create(request)
+        # or to collection method. Catch errors.
+        try:
+            if ident:
+                entry = self.get_entry(ident)
+                if request_method == 'GET':
+                    return entry.read(request)
+                elif request_method == 'PUT':
+                    load_put_and_files(request)
+                    return entry.update(request)
+                elif request_method == 'DELETE':
+                    return entry.delete(request)
+            else:
+                if request_method == 'GET':
+                    return self.read(request)
+                elif request_method == 'POST':
+                    return self.create(request)
+        except (self.queryset.model.DoesNotExist, Http404):
+            # 404 Page not found
+            return self.responder.error(request, 404)
+        except InvalidModelData, i:
+            # 400 Bad Request error.
+            return self.responder.error(request, 400, i.errors)
         
         # No other methods allowed
         return HttpResponseBadRequest()
@@ -106,9 +123,9 @@ class Collection:
             response.status_code = 201
             response.headers['Location'] = model_entry.get_url()
             return response
-        
+
         # Otherwise return a 400 Bad Request error.
-        return self.responder.error(request, 400, f.errors)
+        raise InvalidModelData(f.errors)
     
     def read(self, request):
         """
@@ -123,10 +140,7 @@ class Collection:
         """
         Returns a single Entry resource that is tied to a model.
         """
-        try:
-            model = self.queryset.get(**{self.ident_field.name : ident})
-        except self.queryset.model.DoesNotExist:
-            raise Http404
+        model = self.queryset.get(**{self.ident_field.name : ident})
         return Entry(self, model)
     
     def get_url_pattern(self):
@@ -200,7 +214,7 @@ class Entry:
             return response
         
         # Otherwise return a 400 Bad Request error.
-        return self.collection.responder.error(request, 400, f.errors)
+        raise InvalidModelData(f.errors)
     
     def delete(self, request):
         """
@@ -209,7 +223,6 @@ class Entry:
         resource URI with method DELETE.
         """
         self.model.delete()
-        
-        return HttpResponseRedirect(self.collection.url)
+        return HttpResponse(_("Object successfully deleted."), self.collection.responder.mimetype)
     
 
