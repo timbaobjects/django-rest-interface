@@ -121,6 +121,7 @@ class ChoiceCollection(Collection):
         return None
 
 class ChoiceEntry(Entry):
+    
     def get_url(self):
         choice_num = self.model.get_num()
         return 'json/polls/%d/choices/%s/' % (self.model.id, choice_num)

@@ -6,11 +6,14 @@ the objects of a ModelResource instance are rendered
 views, ...).
 """
 from django.core import serializers
+from django.core.handlers.wsgi import STATUS_CODE_TEXT
 from django.core.paginator import ObjectPaginator, InvalidPage
 from django.core.xheaders import populate_xheaders
 from django.http import Http404, HttpResponse
 from django.newforms.util import ErrorDict
 from django.template import loader, RequestContext
+from django.utils import simplejson
+from django.utils.xmlutils import SimplerXMLGenerator
 from django.views.generic.simple import direct_to_template
 
 class SerializeResponder(object):
@@ -63,7 +66,7 @@ class SerializeResponder(object):
         - human-readable error message
         """
         response = HttpResponse(mimetype = self.mimetype)
-        response.write('Error %s' % status_code)
+        response.write('%d %s' % (status_code, STATUS_CODE_TEXT[status_code]))
         if error_dict:
             response.write('\n\nErrors:\n')
             response.write(error_dict.as_text())
@@ -102,8 +105,21 @@ class JSONResponder(SerializeResponder):
         SerializeResponder.__init__(self, 'json', 'application/json',
                     paginate_by=paginate_by, allow_empty=allow_empty)
 
-    # def error(self, status_code, error_dict={}):
-        # TODO: Return JSON error message
+    def error(self, request, status_code, error_dict=ErrorDict()):
+        """
+        Return JSON error response that includes a human readable error
+        message, application-specific errors and a machine readable
+        status code.
+        """
+        response = HttpResponse(mimetype = self.mimetype)
+        response.status_code = status_code
+        response_dict = {
+            "error-message" : '%d %s' % (status_code, STATUS_CODE_TEXT[status_code]),
+            "status-code" : status_code,
+            "model-errors" : error_dict
+        }
+        simplejson.dump(response_dict, response)
+        return response
 
 class XMLResponder(SerializeResponder):
     """
@@ -113,9 +129,29 @@ class XMLResponder(SerializeResponder):
         SerializeResponder.__init__(self, 'xml', 'application/xml',
                     paginate_by=paginate_by, allow_empty=allow_empty)
 
-    # def error(self, status_code, error_dict={}):
-        # TODO: Return XML error message, e.g.
-        # http://www.oreillynet.com/onlamp/blog/2003/12/restful_error_handling.html
+    def error(self, request, status_code, error_dict=ErrorDict()):
+        """
+        Return XML error response that includes a human readable error
+        message, application-specific errors and a machine readable
+        status code.
+        """
+        from django.conf import settings
+        response = HttpResponse(mimetype = self.mimetype)
+        response.status_code = status_code
+        xml = SimplerXMLGenerator(response, settings.DEFAULT_CHARSET)
+        xml.startDocument()
+        xml.startElement("django-error", {})
+        xml.addQuickElement(name="error-message", contents='%d %s' % (status_code, STATUS_CODE_TEXT[status_code]))
+        xml.addQuickElement(name="status-code", contents=str(status_code))
+        if error_dict:
+            xml.startElement("model-errors", {})
+            for (model_field, errors) in error_dict.items():
+                for error in errors:
+                    xml.addQuickElement(name=model_field, contents=error)
+            xml.endElement("model-errors")        
+        xml.endElement("django-error")
+        xml.endDocument()
+        return response
 
 class TemplateResponder(object):
     """

@@ -61,7 +61,7 @@ def runtests():
         headers, content = http.request(url, 'POST', params)
         assert headers['status'] == '400', show_in_browser(content)
         print 'Creating poll with insufficient data failed (ok)'
-            
+        
         # Create poll
         params = urlencode({
             'question' : 'Does this work?',
@@ -159,8 +159,18 @@ def runtests():
     assert content.find('secret') == -1
     print 'Attempt to get 12th choice for poll #1 failed (ok).'
     
-    # TODO: Update/delete tests
-    
+    # Try to create poll with insufficient data
+    # (needs to fail)
+    url = 'http://%s:%s/json/polls/' % (host, port)
+    params = urlencode({
+        'question' : 'Does this not work?',
+    })
+    headers, content = http.request(url, 'POST', params)
+    assert headers['status'] == '400', show_in_browser(content)
+    print 'Creating poll with insufficient data failed (ok)'
+
+    # TODO: Further update/delete tests
+        
     print 'Tests for different URL pattern succeeded.\n'
 
 
