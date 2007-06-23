@@ -39,7 +39,7 @@ class Collection:
     """
     
     def __init__(self, queryset, responder, permitted_methods=None, expose_fields=None,
-                 base_url=None, entry_url=None, ident_field_name=None):
+                 collection_url_pattern=None, entry_url_pattern=None):
         """
         queryset:
             determines the subset of objects (of a Django model)
@@ -54,22 +54,15 @@ class Collection:
         expose_fields:
             the model fields that can be accessed
             by the HTTP methods described in permitted_methods
-        ident_field_name:
-            the name of a model field (a number field, a character 
-            field or a slug field) that is used to construct the URL
-            of individual resource objects from the URL.
-        get_model_func:
-            optional customized function that takes a key-value dict
-            parsed from an url as an argument and returns an entry
-        base_url:
-            The URL of the collection of model objects for
+        collection_url_pattern:
+            The URL pattern of the collection of model objects for
             this resource, e.g. 'xml/choices/'
-        entry_url:
+        entry_url_pattern:
             The URL for single entries of this collection,
             e.g. 'xml/choices/(?P<ident>\d+)/?'. 
-            If entry_url does not contain "(?P<ident>)", you need
-            to overwrite get_entry in order to retain a working
-            URL-to-model mapping.
+            If entry_url_pattern does not contain "(?P<ident>)", 
+            you need to overwrite get_entry in order to retain a 
+            working URL-to-model mapping.
         """
         # Available data
         self.queryset = queryset
@@ -89,12 +82,14 @@ class Collection:
         responder.expose_fields = self.expose_fields
         
         # URL generation
-        if ident_field_name:
-            self.ident_field = self.queryset.model._meta.get_field(ident_field_name)
+        if collection_url_pattern:
+            self.collection_url_pattern = collection_url_pattern
         else:
-            self.ident_field = self.queryset.model._meta.pk
-        self.base_url = base_url or self.default_base_url()
-        self.entry_url = entry_url or self.default_entry_url()
+            self.collection_url_pattern = self.default_collection_url_pattern()
+        if entry_url_pattern:
+            self.entry_url_pattern = entry_url_pattern
+        else:
+            self.entry_url_pattern = self.default_entry_url_pattern()
     
     def dispatch(self, request, is_entry, **url_parts):
         """
@@ -136,8 +131,8 @@ class Collection:
             # 400 Bad Request error.
             return self.responder.error(request, 400, i.errors)
         
-        # No other methods allowed
-        return HttpResponseBadRequest()
+        # No other methods allowed: Bad Request
+        return self.responder.error(request, 400)
     
     def create(self, request, url_parts={}):
         """
@@ -178,42 +173,56 @@ class Collection:
         regex dict url_parts.
         """
         assert url_parts.get('ident')
-        model = self.queryset.get(**{self.ident_field.name : url_parts['ident']})
+        model = self.queryset.get(**{self.queryset.model._meta.pk.name : url_parts['ident']})
         entry = Entry(self, model)
         return entry
     
-    def default_base_url(self):
+    def get_url(self):
+        collection_url = self.collection_url_pattern
+        if collection_url[0] == '^':
+            collection_url = collection_url[1:]
+        if collection_url[-1] == '$':
+            collection_url = collection_url[:-1]
+        if collection_url[-1] == '?':
+            collection_url = collection_url[:-1]
+        return collection_url
+    
+    def default_collection_url_pattern(self):
         """
         Returns a default url for the collection, e.g.
         "api/poll/".
         """
-        return r'api/%s/' % self.queryset.model._meta.module_name
+        return r'^api/%s/?$' % self.queryset.model._meta.module_name
         
-    def default_entry_url(self):
+    def default_entry_url_pattern(self, id_field=None):
         """
         Returns a default url regex pattern that looks like this:
         [collection url]/[entry identifier]/, e.g.
         "api/poll/[poll_id]/".
+        
+        id_field:
+            The field class that identifies a specific resource 
+            object (usually the class of the primary key field).
         """
-        # Get the field class that identifies a specific resource 
-        # object (usually the class of the primary key field).
-        f = self.ident_field.__class__
+        # If no field is given, use the primary key
+        pk_field = self.queryset.model._meta.pk.__class__
         # Get the regular expression for this type of field
-        if f in (AutoField, IntegerField, PositiveIntegerField, SmallIntegerField):
+        if pk_field in (AutoField, IntegerField, PositiveIntegerField, SmallIntegerField):
             ident_pattern = r'\d+'
-        elif f == CharField:
+        elif pk_field == CharField:
             ident_pattern = r'\w+'
-        elif f == SlugField:
+        elif pk_field == SlugField:
             ident_pattern = r'[a-z0-9_-]+'
         else:
             raise InvalidURLField
         # Construct and return the URL pattern for this resource
-        return r'%s(?P<ident>%s)/?' % (self.base_url, ident_pattern)
-    
+        return r'%s(?P<ident>%s)/?$' % (self.get_url(), ident_pattern)
+
     def get_url_pattern(self):
         return patterns('',
-            (r'^%s$' % self.entry_url, 'django_restapi.model_resource.dispatch', {'is_entry' : True, 'resource' : self}),
-            (r'^%s$' % self.base_url, 'django_restapi.model_resource.dispatch', {'is_entry' : False, 'resource' : self}))
+            (self.entry_url_pattern, 'django_restapi.model_resource.dispatch', {'is_entry' : True, 'resource' : self}),
+            (self.collection_url_pattern, 'django_restapi.model_resource.dispatch', {'is_entry' : False, 'resource' : self}))
+            
 
 class Entry:
     """
@@ -232,8 +241,8 @@ class Entry:
         # by subclassing Collection
         if hasattr(self.collection, "get_entry_url"):
             return self.collection.get_entry_url(self)
-        ident = getattr(self.model, self.collection.ident_field.name)
-        return '%s%s/' % (self.collection.base_url, str(ident))
+        pk_value = getattr(self.model, self.model._meta.pk.name)
+        return '%s%s/' % (self.collection.get_url(), str(pk_value))
 
     def read(self, request, url_parts={}):
         """

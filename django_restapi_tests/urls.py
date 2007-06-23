@@ -37,7 +37,7 @@ xml_poll_resource = Collection(
     permitted_methods = ('GET', 'POST', 'PUT', 'DELETE'),
     expose_fields = ('id', 'question', 'pub_date'),
     responder = XMLResponder(paginate_by = 10),
-    base_url = r'xml/polls/'
+    collection_url_pattern = r'^xml/polls/?$'
 )
 
 xml_choice_resource = Collection(
@@ -45,7 +45,7 @@ xml_choice_resource = Collection(
     permitted_methods = ('GET',),
     expose_fields = ('id', 'poll_id', 'choice'),
     responder = XMLResponder(paginate_by = 5),
-    base_url = r'xml/choices/'
+    collection_url_pattern = r'^xml/choices/?$'
 )
 
 urlpatterns += xml_poll_resource.get_url_pattern()
@@ -67,7 +67,7 @@ template_poll_resource = Collection(
         template_object_name = 'poll',
         paginate_by = 10
     ),
-    base_url = r'html/polls/'
+    collection_url_pattern = r'^html/polls/?$'
 )
 
 template_choice_resource = Collection(
@@ -79,7 +79,7 @@ template_choice_resource = Collection(
         template_object_name = 'choice',
         paginate_by = 5
     ),
-    base_url = r'html/choices/'
+    collection_url_pattern = r'^html/choices/?$'
 )
 
 urlpatterns += template_poll_resource.get_url_pattern()
@@ -101,7 +101,7 @@ json_poll_resource = Collection(
     permitted_methods = ('GET', 'POST', 'PUT', 'DELETE'),
     expose_fields = ('id', 'question', 'pub_date'),
     responder = JSONResponder(paginate_by=10),
-    base_url = r'json/polls/'
+    collection_url_pattern = r'^json/polls/$'
 )
 
 class ChoiceCollection(Collection):
@@ -129,8 +129,8 @@ json_choice_resource = ChoiceCollection(
     permitted_methods = ('GET', 'POST', 'PUT', 'DELETE'),
     expose_fields = ('id', 'poll_id', 'choice', 'votes'),
     responder = JSONResponder(paginate_by=5),
-    base_url = r'json/polls/(?P<poll_id>\d+)/choices/?',
-    entry_url = r'json/polls/(?P<poll_id>\d+)/choices/(?P<choice_num>\d+)/?'
+    collection_url_pattern = r'^json/polls/(?P<poll_id>\d+)/choices/?$',
+    entry_url_pattern = r'^json/polls/(?P<poll_id>\d+)/choices/(?P<choice_num>\d+)/?$'
 )
 
 urlpatterns += json_poll_resource.get_url_pattern()
