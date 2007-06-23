@@ -231,7 +231,6 @@ class TemplateResponder(object):
         t = self.template_loader.get_template(template_name)
         return HttpResponse(t.render(c), mimetype=self.mimetype)
 
-        
     def element(self, request, elem):
         template_name = '%s/%s_detail.html' % (self.template_dir, elem._meta.module_name)
         t = self.template_loader.get_template(template_name)
@@ -247,7 +246,6 @@ class TemplateResponder(object):
         response = HttpResponse(t.render(c), mimetype=self.mimetype)
         populate_xheaders(request, response, elem.__class__, getattr(elem, elem._meta.pk.name))
         return response
-
     
     def error(self, request, status_code, error_dict=ErrorDict()):
         response = direct_to_template(request, 

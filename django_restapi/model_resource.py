@@ -178,6 +178,9 @@ class Collection:
         return entry
     
     def get_url(self):
+        """
+        Returns the URL of the collection (factory URL).
+        """
         collection_url = self.collection_url_pattern
         if collection_url[0] == '^':
             collection_url = collection_url[1:]
@@ -205,13 +208,14 @@ class Collection:
             object (usually the class of the primary key field).
         """
         # If no field is given, use the primary key
-        pk_field = self.queryset.model._meta.pk.__class__
+        if not id_field:
+            id_field = self.queryset.model._meta.pk.__class__
         # Get the regular expression for this type of field
-        if pk_field in (AutoField, IntegerField, PositiveIntegerField, SmallIntegerField):
+        if id_field in (AutoField, IntegerField, PositiveIntegerField, SmallIntegerField):
             ident_pattern = r'\d+'
-        elif pk_field == CharField:
+        elif id_field == CharField:
             ident_pattern = r'\w+'
-        elif pk_field == SlugField:
+        elif id_field == SlugField:
             ident_pattern = r'[a-z0-9_-]+'
         else:
             raise InvalidURLField
