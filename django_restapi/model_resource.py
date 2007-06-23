@@ -38,16 +38,20 @@ class Collection:
     Resource for a collection of models (queryset).
     """
     
-    def __init__(self, queryset, responder, permitted_methods=None, expose_fields=None,
+    def __init__(self, queryset, responder, authentication=None, 
+                 permitted_methods=None, expose_fields=None,
                  collection_url_pattern=None, entry_url_pattern=None):
         """
         queryset:
             determines the subset of objects (of a Django model)
             that make up this resource
         responder:
-            the data format class that creates HttpResponse
+            the data format instance that creates HttpResponse
             objects from single or multiple model objects and
             renders forms
+        authentication:
+            the authentication instance that checks whether a
+            request is authenticated
         permitted_methods:
             the HTTP request methods that are allowed for this 
             resource e.g. ('GET', 'PUT')
@@ -71,6 +75,7 @@ class Collection:
         self.responder = responder
         
         # Access restrictions
+        self.authentication = authentication
         if permitted_methods:
             self.permitted_methods = [op.upper() for op in permitted_methods]
         else:
@@ -100,6 +105,9 @@ class Collection:
         """
         
         # Check permission
+        if self.authentication:
+            if not self.authentication.is_authenticated(request):
+                return self.authentication.challenge()
         request_method = request.method.upper()
         if request_method not in self.permitted_methods:
             return HttpResponseNotAllowed(self.permitted_methods)
@@ -220,7 +228,7 @@ class Collection:
         else:
             raise InvalidURLField
         # Construct and return the URL pattern for this resource
-        return r'%s(?P<ident>%s)/?$' % (self.get_url(), ident_pattern)
+        return r'^%s(?P<ident>%s)/?$' % (self.get_url(), ident_pattern)
 
     def get_url_pattern(self):
         return patterns('',

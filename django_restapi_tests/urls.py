@@ -1,6 +1,7 @@
 from django.conf.urls.defaults import *
 from django_restapi.model_resource import Collection, Entry
 from django_restapi.responder import *
+from django_restapi.authentication import *
 from polls.models import Poll, Choice
 
 urlpatterns = patterns('',
@@ -15,7 +16,7 @@ urlpatterns = patterns('',
 
 simple_poll_resource = Collection(
     queryset = Poll.objects.all(), 
-    responder = XMLResponder()
+    responder = XMLResponder(),
 )
 simple_choice_resource = Collection(
     queryset = Choice.objects.all(),
@@ -135,3 +136,41 @@ json_choice_resource = ChoiceCollection(
 
 urlpatterns += json_poll_resource.get_url_pattern()
 urlpatterns += json_choice_resource.get_url_pattern()
+
+
+# Authentication Test API URLs
+#
+# URLs are generated automatically:
+# The API is available at /basic/poll/s, /basic/polls/[poll_id]/,
+# /digest/polls/ and /digest/polls/[poll_id]/
+
+def digest_authfunc(username, realm):
+    """
+    Exemplary authfunc for HTTP Digest. In production situations,
+    the combined hashes of realm, username and password are usually
+    stored in a special file/db.
+    """
+    hashes = {
+        ('realm1', 'john') : '3014aff1d0d0f0038e23c1195301def3', # Password: johnspass
+        ('realm2', 'jim') : '5bae77fe607e161b831c8f8026a2ceb2'   # Password: jimspass
+    }
+    return hashes.get((username, realm), "")
+
+# No auth function for HTTP Basic specified
+# -> django.contrib.auth.models.User is used.
+# Test with username 'rest', password 'rest'.
+basicauth_poll_resource = Collection(
+    queryset = Poll.objects.all(), 
+    responder = XMLResponder(),
+    authentication = HttpBasicAuthentication(),
+    collection_url_pattern = r'^basic/polls/$'
+)
+digestauth_poll_resource = Collection(
+    queryset = Poll.objects.all(),
+    responder = XMLResponder(),
+    authentication = HttpDigestAuthentication(digest_authfunc, 'realm1'),
+    collection_url_pattern = r'^digest/polls/$'
+)
+
+urlpatterns += basicauth_poll_resource.get_url_pattern()
+urlpatterns += digestauth_poll_resource.get_url_pattern()

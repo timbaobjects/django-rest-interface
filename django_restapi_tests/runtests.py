@@ -210,10 +210,47 @@ def runtests():
     headers, content = http.request(url, 'DELETE')
     assert headers['status'] == '200', show_in_browser(content)
     print 'Choice #1 deleted.'
-
         
     print 'Tests for different URL pattern succeeded.\n'
 
+
+    # Authentication tests:
+    
+    url = 'http://%s:%s/basic/polls/' % (host, port)
+    headers, content = http.request(url, 'GET')
+    assert headers['status'] == '401', show_in_browser(content)
+    print 'Basic authentication, no password'
+    
+    http2 = httplib2.Http()
+    http2.add_credentials('rest', 'wrong_password')
+    headers, content = http.request(url, 'GET')
+    assert headers['status'] == '401', show_in_browser(content)
+    print 'Basic authentication, wrong password'
+
+    http2 = httplib2.Http()
+    http2.add_credentials('rest', 'rest')
+    headers, content = http2.request(url, 'GET')
+    assert headers['status'] == '200', show_in_browser(content)
+    print 'Basic authentication, right password'
+    
+    url = 'http://%s:%s/digest/polls/' % (host, port)
+    headers, content = http.request(url, 'GET')
+    assert headers['status'] == '401', show_in_browser(content)
+    print 'Digest authentication, no password'
+    
+    http2 = httplib2.Http()
+    http2.add_credentials('john', 'wrong_password')
+    headers, content = http2.request(url, 'GET')
+    assert headers['status'] == '401', show_in_browser(content)
+    print 'Digest authentication, wrong password'
+    
+    http2 = httplib2.Http()
+    http2.add_credentials('john', 'johnspass')
+    headers, content = http2.request(url, 'GET')
+    assert headers['status'] == '200', show_in_browser(content)
+    print 'Digest authentication, right password'
+        
+    print 'Authentication tests succeeded.\n'
 
 if __name__ == '__main__':
     runtests()
