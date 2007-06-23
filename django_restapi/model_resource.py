@@ -228,6 +228,10 @@ class Entry:
         """
         Returns the URL for this resource object.
         """
+        # Make it possible to overwrite all urls
+        # by subclassing Collection
+        if hasattr(self.collection, "get_entry_url"):
+            return self.collection.get_entry_url(self)
         ident = getattr(self.model, self.collection.ident_field.name)
         return '%s%s/' % (self.collection.base_url, str(ident))
 

@@ -167,9 +167,50 @@ def runtests():
     })
     headers, content = http.request(url, 'POST', params)
     assert headers['status'] == '400', show_in_browser(content)
-    print 'Creating poll with insufficient data failed (ok)'
+    print 'Creating choice with insufficient data failed (ok)'
+    
+    # Create choice
+    url = 'http://%s:%s/json/polls/1/choices/' % (host, port)
+    params = urlencode({
+        'poll' : 1, # TODO: Should be taken from URL
+        'choice' : 'New choice',
+        'votes' : 0
+    })
+    headers, content = http.request(url, 'POST', params)
+    assert headers['status'] == '201', show_in_browser(content)
+    location = headers['location']
+    poll_id = int(re.findall("\d+", location)[0])
+    assert poll_id == 1, poll_id
+    choice_id = int(re.findall("\d+", location)[1])
+    print 'Created choice: ', choice_id
 
-    # TODO: Further update/delete tests
+    # Try to update choice with insufficient data (needs to fail)
+    url = 'http://%s:%s/%s' % (host, port, location)
+    params = urlencode({
+        'poll' : 1, # TODO: Should be taken from URL
+        'choice' : 'New choice',
+        'votes' : 'Should be an integer'
+    })
+    headers, content = http.request(url, 'PUT', params)
+    assert headers['status'] == '400', show_in_browser(content)
+    print 'Changing choice with inappropriate data failed (ok)'
+    
+    # Update choice
+    params = urlencode({
+        'poll' : 1, # TODO: Should be taken from URL
+        'choice' : 'New choice',
+        'votes' : '712'
+    })
+    headers, content = http.request(url, 'PUT', params)
+    assert content.find("712") != -1, show_in_browser(content)
+    assert headers['status'] == '200', show_in_browser(content)
+    print 'Updated choice #1.'
+    
+    # Delete choice
+    headers, content = http.request(url, 'DELETE')
+    assert headers['status'] == '200', show_in_browser(content)
+    print 'Choice #1 deleted.'
+
         
     print 'Tests for different URL pattern succeeded.\n'
 

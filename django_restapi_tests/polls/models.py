@@ -27,6 +27,6 @@ class Choice(models.Model):
         return self.choice
     def get_num(self):
         try:
-            return self.poll.get_choice_list.index(self)+1
+            return self.poll.get_choice_list().index(self)+1
         except ValueError:
             raise Choice.DoesNotExist

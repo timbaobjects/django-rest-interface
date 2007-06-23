@@ -115,21 +115,19 @@ class ChoiceCollection(Collection):
         poll_id = url_parts.get('poll_id')
         choice_num = url_parts.get('choice_num')
         if poll_id and choice_num:
-            poll = Poll.objects.get(id=poll_id)
-            choice = poll.get_choice_from_num(choice_num)
-            return ChoiceEntry(self, choice)
+            poll = Poll.objects.get(id=int(poll_id))
+            choice = poll.get_choice_from_num(int(choice_num))
+            return Entry(self, choice)
         return None
 
-class ChoiceEntry(Entry):
-    
-    def get_url(self):
-        choice_num = self.model.get_num()
-        return 'json/polls/%d/choices/%s/' % (self.model.id, choice_num)
+    def get_entry_url(self, entry):
+        choice_num = entry.model.get_num()
+        return 'json/polls/%d/choices/%s/' % (entry.model.poll.id, choice_num)
 
 json_choice_resource = ChoiceCollection(
     queryset = Choice.objects.all(),
-    permitted_methods = ('GET',),
-    expose_fields = ('id', 'poll_id', 'choice'),
+    permitted_methods = ('GET', 'POST', 'PUT', 'DELETE'),
+    expose_fields = ('id', 'poll_id', 'choice', 'votes'),
     responder = JSONResponder(paginate_by=5),
     base_url = r'json/polls/(?P<poll_id>\d+)/choices/?',
     entry_url = r'json/polls/(?P<poll_id>\d+)/choices/(?P<choice_num>\d+)/?'

@@ -45,11 +45,17 @@ class SerializeResponder(object):
         self.format.
         """
         # Hide unexposed fields
+        hidden_fields = []
         for object in list(object_list):
             for field in object._meta.fields:
-                if not field.name in self.expose_fields:
+                if not field.name in self.expose_fields and field.serialize:
                     field.serialize = False
-        return serializers.serialize(self.format, object_list)
+                    hidden_fields.append(field)
+        response = serializers.serialize(self.format, object_list)
+        # Show unexposed fields again
+        for field in hidden_fields:
+            field.serialize = True
+        return response
     
     def element(self, request, elem):
         """
@@ -170,7 +176,7 @@ class TemplateResponder(object):
         self.mimetype = mimetype
         self.expose_fields = None # Set by Collection.__init__
     
-    def _restrict_fields(self, obj, allowed_fields):
+    def _hide_unexposed_fields(self, obj, allowed_fields):
         """
         Remove fields from a model that should not be public.
         """
@@ -217,7 +223,7 @@ class TemplateResponder(object):
                 raise Http404
         # Hide unexposed fields
         for obj in object_list:
-            self._restrict_fields(obj, self.expose_fields)
+            self._hide_unexposed_fields(obj, self.expose_fields)
         for key, value in self.extra_context.items():
             if callable(value):
                 self.extra_context[key] = value()
@@ -233,7 +239,7 @@ class TemplateResponder(object):
             self.template_object_name : elem,
         }, self.context_processors)
         # Hide unexposed fields
-        self._restrict_fields(elem, self.expose_fields)
+        self._hide_unexposed_fields(elem, self.expose_fields)
         for key, value in self.extra_context.items():
             if callable(value):
                 self.extra_context[key] = value()
