@@ -23,13 +23,13 @@ class HttpBasicAuthentication(object):
     """    
     def __init__(self, authfunc=djangouser_auth, realm=_('Restricted Access')):
         """
-        realm:
-            An identifier for the authority that is requesting
-            authorization
         authfunc:
             A user-defined function which takes a username and
             password as its first and second arguments respectively
             and returns True if the user is authenticated
+        realm:
+            An identifier for the authority that is requesting
+            authorization
         """
         self.realm = realm
         self.authfunc = authfunc
@@ -72,14 +72,14 @@ class HttpDigestAuthentication(object):
     """    
     def __init__(self, authfunc, realm=_('Restricted Access')):
         """
-        realm:
-            An identifier for the authority that is requesting
-            authorization
         authfunc:
             A user-defined function which takes a username and
             a realm as its first and second arguments respectively
             and returns the combined md5 hash of username,
             authentication realm and password.
+        realm:
+            An identifier for the authority that is requesting
+            authorization
         """
         self.realm = realm
         self.authfunc = authfunc
