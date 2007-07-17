@@ -33,7 +33,7 @@ class InvalidModelData(Exception):
     def __init__(self, errors=ErrorDict()):
         self.errors = errors
 
-class Collection:
+class Collection(object):
     """
     Resource for a collection of models (queryset).
     """
@@ -236,7 +236,7 @@ class Collection:
             (self.collection_url_pattern, 'django_restapi.model_resource.dispatch', {'is_entry' : False, 'resource' : self}))
             
 
-class Entry:
+class Entry(object):
     """
     Resource for a single model.
     """
