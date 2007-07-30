@@ -44,7 +44,7 @@ class Resource(object):
         return (r'^%s(?:(?P<ident>\d+)/?)?$' % base_url,
                 'django_restapi.resource.dispatch', {'resource' : self})
     
-    def dispatch(self, request):
+    def __call__(self, request):
         """
         Redirects to one of the CRUD methods depending 
         on the HTTP method of the request. Checks whether
@@ -79,12 +79,4 @@ class Resource(object):
     
     def delete(self, request):
         raise Http404
-
-def dispatch(request, resource, ident=''):
-    """
-    Helper function that redirects a call from Django's
-    url patterns that has a resource instance as an
-    argument to the dispatch method of the instance.
-    """
-    return resource.dispatch(request, ident)
     

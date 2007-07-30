@@ -9,14 +9,6 @@ from django.http import *
 from django.newforms.util import ErrorDict
 from resource import load_put_and_files
 
-def dispatch(request, resource, is_entry, **url_parts):
-    """
-    Helper function that redirects a call from Django's
-    url patterns that has a resource instance as an
-    argument to the dispatch method of the instance.
-    """
-    return resource.dispatch(request, is_entry, **url_parts)
-
 class InvalidURLField(Exception):
     """
     Raised if ModelResource.get_url_pattern() can't match
@@ -96,7 +88,7 @@ class Collection(object):
         else:
             self.entry_url_pattern = self.default_entry_url_pattern()
     
-    def dispatch(self, request, is_entry, **url_parts):
+    def __call__(self, request, is_entry, **url_parts):
         """
         Redirects to one of the CRUD methods depending 
         on the HTTP method of the request. Checks whether
@@ -232,8 +224,8 @@ class Collection(object):
 
     def get_url_pattern(self):
         return patterns('',
-            (self.entry_url_pattern, 'django_restapi.model_resource.dispatch', {'is_entry' : True, 'resource' : self}),
-            (self.collection_url_pattern, 'django_restapi.model_resource.dispatch', {'is_entry' : False, 'resource' : self}))
+            (self.entry_url_pattern, self, {'is_entry' : True, 'resource' : self}),
+            (self.collection_url_pattern, self, {'is_entry' : False, 'resource' : self}))
             
 
 class Entry(object):
