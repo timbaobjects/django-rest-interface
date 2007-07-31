@@ -140,7 +140,7 @@ def runtests():
     # Get filtered list of choices
     url = 'http://%s:%s/json/polls/1/choices/' % (host, port)
     headers, content = http.request(url, 'GET')
-    assert len(eval(content)) == 3
+    assert len(eval(content)) == 3, show_in_browser(content)
     assert headers['status'] == '200', show_in_browser(content)
     assert content.find('secret') == -1
     print 'Got list of choices for poll #1.'    
@@ -185,7 +185,7 @@ def runtests():
     print 'Created choice: ', choice_id
 
     # Try to update choice with insufficient data (needs to fail)
-    url = 'http://%s:%s/%s' % (host, port, location)
+    url = 'http://%s:%s%s' % (host, port, location)
     params = urlencode({
         'poll' : 1, # TODO: Should be taken from URL
         'choice' : 'New choice',
