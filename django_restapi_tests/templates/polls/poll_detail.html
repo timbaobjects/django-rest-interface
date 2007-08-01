@@ -14,6 +14,13 @@
 			<li><a href="../../choices/{{ choice.id }}/">{{ choice }}</a></li>
 		{% endfor %}
 		</ol>
+		
+		<form action="." method="DELETE">
+			<input type="submit" value="Remove poll" />
+			<p><em>Needs a browser that supports DELETE or a Django
+			    middleware that transforms DELETE into POST.</em></p>
+		</form>
+		
 	</body>
 	
 </html>
