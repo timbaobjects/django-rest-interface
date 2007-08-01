@@ -165,12 +165,12 @@ class Collection(object):
         """
         return self.responder.list(request, self.queryset)
     
-    def get_entry(self, id):
+    def get_entry(self, pk_value):
         """
-        Returns a single entry if it can identify a model from the
-        regex dict url_parts.
+        Returns a single entry retrieved by filtering the 
+        collection queryset by primary key value.
         """
-        model = self.queryset.get(**{self.queryset.model._meta.pk.name : id})
+        model = self.queryset.get(**{self.queryset.model._meta.pk.name : pk_value})
         entry = self.entry_class(self, model)
         return entry
     
