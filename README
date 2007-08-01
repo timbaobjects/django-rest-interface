@@ -1,5 +1,6 @@
 The django-rest-interface project includes two parts:
 
+
 A) The REST interface: django_restapi
 
 resource.Resource is the generic class for REST resources. Use 
@@ -10,7 +11,15 @@ specific implementations that map resources 1:1 to Django models.
 responder contains classes you can use to choose which type of 
 output format ModelResource returns. For instance, add
 "responder = XMLResponder()" to ModelResource's constructor 
-call in urls.py in order to use XML as a format.
+call in urls.py in order to use XML as a data format.
+
+authentication contains classes you can use to choose which
+type of authentication is required to access your API.
+For instance, add "authentication = HttpBasicAuthentication()"
+to ModelResource's constructor call in urls.py in order to use
+HTTP Basic authentication. The default authfunc authenticates 
+username and password against django.contrib.auth.models.User.
+
 
 B) Tests: django_restapi_tests
 
