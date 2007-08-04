@@ -186,6 +186,9 @@ class TemplateResponder(object):
                 obj.__dict__.pop(field.name)    
 
     def list(self, request, queryset, page=None):
+        """
+        Renders a list of model objects to HttpResponse.
+        """
         template_name = '%s/%s_list.html' % (self.template_dir, queryset.model._meta.module_name)
         if self.paginate_by:
             paginator = ObjectPaginator(queryset, self.paginate_by)
@@ -232,6 +235,9 @@ class TemplateResponder(object):
         return HttpResponse(t.render(c), mimetype=self.mimetype)
 
     def element(self, request, elem):
+        """
+        Renders single model objects to HttpResponse.
+        """
         template_name = '%s/%s_detail.html' % (self.template_dir, elem._meta.module_name)
         t = self.template_loader.get_template(template_name)
         c = RequestContext(request, {
@@ -248,6 +254,9 @@ class TemplateResponder(object):
         return response
     
     def error(self, request, status_code, error_dict=ErrorDict()):
+        """
+        Renders error template (template name: error status code).
+        """
         response = direct_to_template(request, 
             template = '%s/%s.html' % (self.template_dir, str(status_code)),
             extra_context = { 'errors' : error_dict },

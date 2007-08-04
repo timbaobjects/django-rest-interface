@@ -9,6 +9,7 @@ from django.db.models.fields import AutoField, CharField, IntegerField, \
 from django.http import *
 from django.newforms.util import ErrorDict
 from resource import load_put_and_files
+from django.utils.translation.trans_null import _
 
 def reverse(viewname, args=(), kwargs={}):
     """
@@ -33,7 +34,6 @@ class Collection(object):
     """
     Resource for a collection of models (queryset).
     """
-    
     def __init__(self, queryset, responder, authentication=None, 
                  permitted_methods=None, expose_fields=None,
                  entry_class=None):
@@ -126,7 +126,7 @@ class Collection(object):
             # 404 Page not found
             return self.responder.error(request, 404)
         except InvalidModelData, i:
-            # 400 Bad Request error.
+            # 400 Bad Request error
             return self.responder.error(request, 400, i.errors)
         
         # No other methods allowed: Bad Request
@@ -184,7 +184,6 @@ class Entry(object):
     """
     Resource for a single model.
     """
-    
     def __init__(self, collection, model):
         self.collection = collection
         self.model = model
@@ -231,9 +230,9 @@ class Entry(object):
     
     def delete(self, request):
         """
-        Deletes the resource identified by 'ident' and redirects to
-        the list of resources. Usually called by a HTTP request to the 
-        resource URI with method DELETE.
+        Deletes the model associated with the current entry.
+        Usually called by a HTTP request to the entry URI
+        with method DELETE.
         """
         self.model.delete()
         return HttpResponse(_("Object successfully deleted."), self.collection.responder.mimetype)

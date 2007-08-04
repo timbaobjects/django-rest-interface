@@ -28,7 +28,7 @@ def digest_authfunc(username, realm):
         ('realm1', 'john') : '3014aff1d0d0f0038e23c1195301def3', # Password: johnspass
         ('realm2', 'jim') : '5bae77fe607e161b831c8f8026a2ceb2'   # Password: jimspass
     }
-    return hashes.get((username, realm), "")
+    return hashes[(username, realm)]
 
 digestauth_poll_resource = Collection(
     queryset = Poll.objects.all(),

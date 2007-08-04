@@ -23,6 +23,5 @@ username and password against django.contrib.auth.models.User.
 
 B) Tests: django_restapi_tests
 
-Contains the API tests. Will be replaced by tests using Russells 
-framework. For now, first run runserver.py, then runtests.py in 
-order to test the REST interface.
+Contains the API tests. Run "python ./manage.py test" in order
+to execute the REST interface unit tests.
