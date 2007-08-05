@@ -109,8 +109,6 @@ class BasicTest(TestCase):
             self.failUnlessEqual(response.status_code, 405)
         
     def test_urlpatterns(self):
-        # TODO: Convert from httplib2 to self.client
-        
         url = '/json/polls/'
         response = self.client.get(url)
         self.failUnlessEqual(response.status_code, 200)
@@ -197,7 +195,7 @@ class AuthenticationTest(TestCase):
         """
         Extract authentication variables from server response
         e.g. {'nonce': '477be2a405a439cdba5227be89ba0f76', 'qop': 'auth', 'realm': 'realm1', 'opaque': '67d958f952de6bd4c1a88686f1b8a896'}
-        and add missing params (method, path, username, cnonce, nc)
+        and add missing params (method, path, username, cnonce, nc).
         """
         www_auth_response = response.headers['WWW-Authenticate']
         self.failUnlessEqual(www_auth_response[:7].lower(), 'digest ')
