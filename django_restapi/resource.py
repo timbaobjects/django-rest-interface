@@ -1,6 +1,7 @@
 """
 Generic resource class.
 """
+from django.core.urlresolvers import reverse as _reverse
 from django.http import Http404, HttpResponseNotAllowed, HttpResponseBadRequest, QueryDict
 
 def load_put_and_files(request):
@@ -16,6 +17,17 @@ def load_put_and_files(request):
         request._load_post_and_files()
         request.PUT = request.POST
         request.method = 'PUT'
+
+def reverse(viewname, args=(), kwargs={}):
+    """
+    Return the URL associated with a view and specified parameters.
+    If the regular expression used specifies an optional slash at 
+    the end of the URL, add the slash.
+    """
+    url = _reverse(viewname, None, args, kwargs)
+    if url[-2:] == '/?':
+        url = url[:-1]
+    return url
 
 class Resource(object):
     """
@@ -63,6 +75,12 @@ class Resource(object):
             return self.delete(request, *args, **kwargs)
         else:
             raise Http404
+    
+    def get_url(self):
+        """
+        Returns resource URL.
+        """
+        return reverse(self)
     
     # The four CRUD methods that any class that 
     # inherits from Resource may implement:

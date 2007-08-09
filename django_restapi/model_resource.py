@@ -3,24 +3,12 @@ Model-bound resource class.
 """
 from django import newforms as forms
 from django.conf.urls.defaults import patterns
-from django.core.urlresolvers import reverse as _reverse
 from django.db.models.fields import AutoField, CharField, IntegerField, \
          PositiveIntegerField, SlugField, SmallIntegerField
 from django.http import *
 from django.newforms.util import ErrorDict
-from resource import load_put_and_files
+from resource import Resource, load_put_and_files, reverse
 from django.utils.translation.trans_null import _
-
-def reverse(viewname, args=(), kwargs={}):
-    """
-    Return the URL associated with a view and specified parameters.
-    If the regular expression used specifies an optional slash at 
-    the end of the URL, add the slash.
-    """
-    url = _reverse(viewname, None, args, kwargs)
-    if url[-2:] == '/?':
-        url = url[:-1]
-    return url
 
 class InvalidModelData(Exception):
     """
@@ -30,7 +18,7 @@ class InvalidModelData(Exception):
     def __init__(self, errors=ErrorDict()):
         self.errors = errors
 
-class Collection(object):
+class Collection(Resource):
     """
     Resource for a collection of models (queryset).
     """
@@ -64,11 +52,7 @@ class Collection(object):
         self.responder = responder
         
         # Access restrictions
-        self.authentication = authentication
-        if permitted_methods:
-            self.permitted_methods = [op.upper() for op in permitted_methods]
-        else:
-            self.permitted_methods = ["GET"]
+        Resource.__init__(self, authentication, permitted_methods)
         if expose_fields:
             self.expose_fields = expose_fields
         else:
@@ -173,12 +157,6 @@ class Collection(object):
         model = self.queryset.get(**{self.queryset.model._meta.pk.name : pk_value})
         entry = self.entry_class(self, model)
         return entry
-    
-    def get_url(self):
-        """
-        Returns the URL of the collection (factory URL).
-        """
-        return reverse(self)
 
 class Entry(object):
     """
