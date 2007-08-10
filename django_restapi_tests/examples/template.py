@@ -26,6 +26,8 @@ template_choice_resource = Collection(
 )
 
 urlpatterns = patterns('',
+   url(r'^html/polls/creator/?$', template_poll_resource.responder.create_form),
+   url(r'^html/polls/(?P<pk>\d+)/editor/?$', template_poll_resource.responder.update_form),
    url(r'^html/polls/(.*?)/?$', template_poll_resource),
-   url(r'^html/choices/(.*?)/?$', template_choice_resource)
+   url(r'^html/choices/(.*?)/?$', template_choice_resource),
 )

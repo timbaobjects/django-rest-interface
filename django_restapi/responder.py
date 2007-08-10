@@ -271,17 +271,26 @@ class TemplateResponder(object):
         """
         Render form for creation of new collection entry.
         """
-        ResourceForm = forms.form_for_model(self.queryset.model)
-        form = ResourceForm(request.POST)
+        ResourceForm = forms.form_for_model(queryset.model)
+        if request.POST:
+            form = ResourceForm(request.POST)
+        else:
+            form = ResourceForm()
         template_name = '%s/%s_form.html' % (self.template_dir, self.template_object_name)
         return render_to_response(template_name, {'form':form})
 
-    def update_form(self, request, elem):
+    def update_form(self, request, pk, queryset):
         """
         Render edit form for one entry model.
         """
+        # Remove queryset cache by cloning the queryset
+        queryset = queryset._clone()
+        elem = queryset.get(**{queryset.model._meta.pk.name : pk})
         ResourceForm = forms.form_for_instance(elem)
-        form = ResourceForm(request.PUT)
+        if request.PUT:
+            form = ResourceForm(request.PUT)
+        else:
+            form = ResourceForm()
         template_name = '%s/%s_form.html' % (self.template_dir, self.template_object_name)
         return render_to_response(template_name, 
                 {'form':form, 'update':True, self.template_object_name:elem})

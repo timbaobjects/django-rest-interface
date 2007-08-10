@@ -7,8 +7,9 @@ from django.db.models.fields import AutoField, CharField, IntegerField, \
          PositiveIntegerField, SlugField, SmallIntegerField
 from django.http import *
 from django.newforms.util import ErrorDict
-from resource import Resource, load_put_and_files, reverse
+from django.utils.functional import curry
 from django.utils.translation.trans_null import _
+from resource import Resource, load_put_and_files, reverse
 
 class InvalidModelData(Exception):
     """
@@ -48,16 +49,18 @@ class Collection(Resource):
         # Available data
         self.queryset = queryset
         
-        # Output format
+        # Output format / responder setup
         self.responder = responder
-        
+        if not expose_fields:
+            expose_fields = [field.name for field in queryset.model._meta.fields]
+        responder.expose_fields = expose_fields
+        if hasattr(responder, 'create_form'):
+            responder.create_form = curry(responder.create_form, queryset=queryset)
+        if hasattr(responder, 'update_form'):
+            responder.update_form = curry(responder.update_form, queryset=queryset)
+                
         # Access restrictions
         Resource.__init__(self, authentication, permitted_methods)
-        if expose_fields:
-            self.expose_fields = expose_fields
-        else:
-            self.expose_fields = [field.name for field in queryset.model._meta.fields]
-        responder.expose_fields = self.expose_fields
         
         self.entry_class = entry_class or Entry
     
