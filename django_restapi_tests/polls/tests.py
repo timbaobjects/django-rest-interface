@@ -19,7 +19,7 @@ def show_in_browser(content):
 
 class BasicTest(TestCase):
 
-    fixtures = ['polls.json']
+    fixtures = ['initial_data.json']
         
     def setUp(self):
         self.client.put = curry(self.client.post, REQUEST_METHOD='PUT')
@@ -189,7 +189,7 @@ class BasicTest(TestCase):
 
 class AuthenticationTest(TestCase):
     
-    fixtures = ['polls.json']
+    fixtures = ['initial_data.json']
     
     def get_digest_test_params(self, response, url, auth_helper):
         """

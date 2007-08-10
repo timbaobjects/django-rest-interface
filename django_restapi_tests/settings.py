@@ -1,3 +1,5 @@
+from os.path import realpath
+
 DEBUG = True
 TEMPLATE_DEBUG = True
 
@@ -12,7 +14,7 @@ INSTALLED_APPS = (
 
 ROOT_URLCONF = 'django_restapi_tests.urls'
 
-DATABASE_NAME = ':memory:' 
+DATABASE_NAME = realpath('testdata')
 DATABASE_ENGINE = 'sqlite3'
 TEMPLATE_DIRS = 'templates'
 

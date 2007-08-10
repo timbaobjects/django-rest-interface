@@ -9,8 +9,10 @@ from django.core import serializers
 from django.core.handlers.wsgi import STATUS_CODE_TEXT
 from django.core.paginator import ObjectPaginator, InvalidPage
 from django.core.xheaders import populate_xheaders
+from django import newforms as forms
 from django.http import Http404, HttpResponse
 from django.newforms.util import ErrorDict
+from django.shortcuts import render_to_response
 from django.template import loader, RequestContext
 from django.utils import simplejson
 from django.utils.xmlutils import SimplerXMLGenerator
@@ -161,7 +163,8 @@ class XMLResponder(SerializeResponder):
 
 class TemplateResponder(object):
     """
-    Data format class that uses Django's generic views.
+    Data format class that uses templates (similar to Django's
+    generic views).
     """
     def __init__(self, template_dir, paginate_by=None, template_loader=loader,
                  extra_context={}, allow_empty=False, context_processors=None,
@@ -264,8 +267,21 @@ class TemplateResponder(object):
         response.status_code = status_code
         return response
     
-    #def get_create_form(self):
-    #    pass
-    
-    #def get_update_form(self):
-    #    pass
+    def create_form(self, request, queryset):
+        """
+        Render form for creation of new collection entry.
+        """
+        ResourceForm = forms.form_for_model(self.queryset.model)
+        form = ResourceForm(request.POST)
+        template_name = '%s/%s_form.html' % (self.template_dir, self.template_object_name)
+        return render_to_response(template_name, {'form':form})
+
+    def update_form(self, request, elem):
+        """
+        Render edit form for one entry model.
+        """
+        ResourceForm = forms.form_for_instance(elem)
+        form = ResourceForm(request.PUT)
+        template_name = '%s/%s_form.html' % (self.template_dir, self.template_object_name)
+        return render_to_response(template_name, 
+                {'form':form, 'update':True, self.template_object_name:elem})

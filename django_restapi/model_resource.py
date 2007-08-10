@@ -121,7 +121,7 @@ class Collection(Resource):
         Creates a resource with attributes given by POST, then
         redirects to the resource URI. 
         """
-        # Create a form filled with the POST data
+        # Create form filled with POST data
         ResourceForm = forms.form_for_model(self.queryset.model)
         f = ResourceForm(request.POST)
         
