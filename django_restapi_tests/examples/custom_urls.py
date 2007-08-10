@@ -51,7 +51,7 @@ json_choice_resource = ChoiceCollection(
 )
 
 urlpatterns = patterns('',
-   url(r'^json/polls/(?P<poll_id>\d+)/choices/(?P<choice_num>\d+)/?$', json_choice_resource, {'is_entry':True}),
-   url(r'^json/polls/(?P<poll_id>\d+)/choices/?$', json_choice_resource, {'is_entry':False}),
+   url(r'^json/polls/(?P<poll_id>\d+)/choices/(?P<choice_num>\d+)/$', json_choice_resource, {'is_entry':True}),
+   url(r'^json/polls/(?P<poll_id>\d+)/choices/$', json_choice_resource, {'is_entry':False}),
    url(r'^json/polls/(.*?)/?$', json_poll_resource)
 )
