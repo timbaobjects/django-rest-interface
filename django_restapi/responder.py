@@ -172,13 +172,16 @@ class TemplateResponder(object):
         self.template_dir = template_dir
         self.paginate_by = paginate_by
         self.template_loader = template_loader
+        for key, value in extra_context.items():
+            if callable(value):
+                extra_context[key] = value()
         self.extra_context = extra_context
         self.allow_empty = allow_empty
         self.context_processors = context_processors
         self.template_object_name = template_object_name
         self.mimetype = mimetype
         self.expose_fields = None # Set by Collection.__init__
-    
+            
     def _hide_unexposed_fields(self, obj, allowed_fields):
         """
         Remove fields from a model that should not be public.
@@ -230,10 +233,7 @@ class TemplateResponder(object):
         # Hide unexposed fields
         for obj in object_list:
             self._hide_unexposed_fields(obj, self.expose_fields)
-        for key, value in self.extra_context.items():
-            if callable(value):
-                self.extra_context[key] = value()
-        c.update(self.extra_context)
+        c.update(self.extra_context)        
         t = self.template_loader.get_template(template_name)
         return HttpResponse(t.render(c), mimetype=self.mimetype)
 
@@ -248,9 +248,6 @@ class TemplateResponder(object):
         }, self.context_processors)
         # Hide unexposed fields
         self._hide_unexposed_fields(elem, self.expose_fields)
-        for key, value in self.extra_context.items():
-            if callable(value):
-                self.extra_context[key] = value()
         c.update(self.extra_context)
         response = HttpResponse(t.render(c), mimetype=self.mimetype)
         populate_xheaders(request, response, elem.__class__, getattr(elem, elem._meta.pk.name))
@@ -276,12 +273,12 @@ class TemplateResponder(object):
             form = ResourceForm(request.POST)
         else:
             form = ResourceForm()
-        template_name = '%s/%s_form.html' % (self.template_dir, self.template_object_name)
+        template_name = '%s/%s_form.html' % (self.template_dir, queryset.model._meta.module_name)
         return render_to_response(template_name, {'form':form})
 
     def update_form(self, request, pk, queryset):
         """
-        Render edit form for one entry model.
+        Render edit form for single entry.
         """
         # Remove queryset cache by cloning the queryset
         queryset = queryset._clone()
@@ -291,6 +288,6 @@ class TemplateResponder(object):
             form = ResourceForm(request.PUT)
         else:
             form = ResourceForm()
-        template_name = '%s/%s_form.html' % (self.template_dir, self.template_object_name)
+        template_name = '%s/%s_form.html' % (self.template_dir, elem._meta.module_name)
         return render_to_response(template_name, 
                 {'form':form, 'update':True, self.template_object_name:elem})
