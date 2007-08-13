@@ -1,4 +1,5 @@
 from django.db import models
+from django.http import Http404
 
 class Person(models.Model):
     name = models.CharField(maxlength=20)

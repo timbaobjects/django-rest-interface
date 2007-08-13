@@ -20,11 +20,11 @@ class FriendshipEntry(Resource):
         context = {'friendship':friendship}
         return render_to_response('people/friends_detail.html', context)
     def delete(self, request, person_id, friend_id):
-        friendship = self.get_friendship(person_id, friend_id)
+        friendship = get_friendship(person_id, friend_id)
         friendship[0].friends.remove(friendship[1])
         return HttpResponseRedirect('/friends/')
 
 urlpatterns = patterns('',
    url(r'^friends/$', FriendshipCollection()),
-   url(r'^friends/(?P<person_id>\d+)-(?P<friend_id>\d+)/$', FriendshipEntry()),
+   url(r'^friends/(?P<person_id>\d+)-(?P<friend_id>\d+)/$', FriendshipEntry(permitted_methods=('GET','DELETE'))),
 )
