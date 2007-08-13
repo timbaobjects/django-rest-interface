@@ -181,7 +181,7 @@ class Entry(object):
         Returns a representation of a single model..
         The format depends on which responder (e.g. JSONResponder)
         is assigned to this ModelResource instance. Usually called by a
-        HTTP request to the resource/ URI with method GET.
+        HTTP request to the resource URI with method GET.
         """
         return self.collection.responder.element(request, self.model)
     

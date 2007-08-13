@@ -9,7 +9,8 @@ INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.sessions',
     'django.contrib.sites',
-    'django_restapi_tests.polls'
+    'django_restapi_tests.polls',
+    'django_restapi_tests.people'
 )
 
 ROOT_URLCONF = 'django_restapi_tests.urls'
