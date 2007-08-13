@@ -1,8 +1,7 @@
 from django.conf.urls.defaults import *
-from django.http import Http404, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django_restapi.resource import Resource
-from django_restapi.responder import XMLResponder
 from django_restapi_tests.people.models import *
 
 # Urls for a resource that does not map 1:1 
