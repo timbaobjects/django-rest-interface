@@ -9,7 +9,8 @@ from django.http import *
 from django.newforms.util import ErrorDict
 from django.utils.functional import curry
 from django.utils.translation.trans_null import _
-from resource import Resource, load_put_and_files, reverse
+from django_restapi.resource import Resource, load_put_and_files, reverse
+from django_restapi.receiver import FormReceiver
 
 class InvalidModelData(Exception):
     """
@@ -23,9 +24,9 @@ class Collection(Resource):
     """
     Resource for a collection of models (queryset).
     """
-    def __init__(self, queryset, responder, authentication=None, 
-                 permitted_methods=None, expose_fields=None,
-                 entry_class=None):
+    def __init__(self, queryset, responder, receiver=None,
+                 authentication=None, permitted_methods=None,
+                 expose_fields=None, entry_class=None):
         """
         queryset:
             determines the subset of objects (of a Django model)
@@ -34,6 +35,9 @@ class Collection(Resource):
             the data format instance that creates HttpResponse
             objects from single or multiple model objects and
             renders forms
+        receiver:
+            the data format instance that handles POST and
+            PUT data
         authentication:
             the authentication instance that checks whether a
             request is authenticated
@@ -48,6 +52,9 @@ class Collection(Resource):
         """
         # Available data
         self.queryset = queryset
+        
+        # Input format
+        self.receiver = receiver or FormReceiver()
         
         # Output format / responder setup
         self.responder = responder
@@ -71,15 +78,22 @@ class Collection(Resource):
         the requested method is allowed for this resource.
         Catches errors.
         """
-        # Check permission
+        # Check authentication
         if self.authentication:
             if not self.authentication.is_authenticated(request):
-                return self.authentication.challenge()
+                response = self.responder.error(request, 401)
+                challenge_headers = self.authentication.challenge_headers()
+                response.headers.update(challenge_headers)
+                return response
+        
+        # Make sure HTTP method is permitted
         request_method = request.method.upper()
         if request_method not in self.permitted_methods:
-            return HttpResponseNotAllowed(self.permitted_methods)
+            response = self.responder.error(request, 405)
+            response['Allow'] = ', '.join(self.permitted_methods)
+            return response
         
-        # Remove queryset cache by cloning the queryset
+        # Remove queryset cache by cloning queryset
         self.queryset = self.queryset._clone()
         
         # Determine whether the collection or a specific
@@ -126,14 +140,15 @@ class Collection(Resource):
         """
         # Create form filled with POST data
         ResourceForm = forms.form_for_model(self.queryset.model)
-        f = ResourceForm(request.POST)
+        data = self.receiver.get_post_data(request)
+        form = ResourceForm(data)
         
         # If the data contains no errors, save the model,
         # return a "201 Created" response with the model's
         # URI in the location header and a representation
         # of the model in the response body.
-        if f.is_valid():
-            new_model = f.save()
+        if form.is_valid():
+            new_model = form.save()
             model_entry = self.entry_class(self, new_model)
             response = model_entry.read(request)
             response.status_code = 201
@@ -141,7 +156,7 @@ class Collection(Resource):
             return response
 
         # Otherwise return a 400 Bad Request error.
-        raise InvalidModelData(f.errors)
+        raise InvalidModelData(form.errors)
     
     def read(self, request):
         """
@@ -193,21 +208,22 @@ class Entry(object):
         """
         # Create a form from the model/PUT data
         ResourceForm = forms.form_for_instance(self.model)
-        f = ResourceForm(request.PUT)
+        data = self.collection.receiver.get_put_data(request)
+        form = ResourceForm(data)
         
         # If the data contains no errors, save the model,
         # return a "200 Ok" response with the model's
         # URI in the location header and a representation
         # of the model in the response body.
-        if f.is_valid():
-            f.save()
+        if form.is_valid():
+            form.save()
             response = self.read(request)
             response.status_code = 200
             response.headers['Location'] = self.get_url()
             return response
         
         # Otherwise return a 400 Bad Request error.
-        raise InvalidModelData(f.errors)
+        raise InvalidModelData(form.errors)
     
     def delete(self, request):
         """

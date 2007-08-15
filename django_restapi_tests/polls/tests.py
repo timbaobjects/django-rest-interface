@@ -1,8 +1,11 @@
 from binascii import b2a_base64
+from datetime import datetime
+from django.core import serializers
 from django.test import TestCase
 from django.utils.functional import curry
 from django_restapi.authentication import HttpDigestAuthentication
 from django_restapi_tests.examples.authentication import digest_authfunc
+from django_restapi_tests.polls.models import Poll
 import webbrowser, random, re, time, urllib2
 import hashlib
 
@@ -186,7 +189,78 @@ class BasicTest(TestCase):
         response = self.client.delete(url)
         self.failUnlessEqual(response.status_code, 200)
 
-
+    def test_submission(self):
+        
+        # XML
+        url = '/fullxml/polls/'
+        response = self.client.get(url)
+        self.failUnlessEqual(response.status_code, 200)
+        
+        #  Create
+        new_poll = Poll(
+            question = 'Does XML submission work?',
+            password = 'secret',
+            pub_date = datetime.now()
+        )
+        serialized_poll = serializers.serialize('xml', [new_poll])
+        serialized_poll = serialized_poll.replace('pk="None"', 'pk="1"') # Is ignored, but needs to be an integer
+        response = self.client.post(url, data=serialized_poll, content_type='application/xml')
+        self.failUnlessEqual(response.status_code, 201)
+        response_content = re.sub('pk="\d+"', 'pk="1"', response.content)
+        self.failUnlessEqual(serialized_poll, response_content)
+        response = self.client.get(url)
+        self.failUnlessEqual(response.status_code, 200)
+        self.failIfEqual(response_content.find("XML submission"), -1)
+        
+        #  Update
+        url = '/fullxml/polls/1/'
+        updated_poll = Poll(
+            question = 'New question',
+            password = 'new_secret',
+            pub_date = datetime.now()
+        )
+        serialized_poll = serializers.serialize('xml', [updated_poll])
+        serialized_poll = serialized_poll.replace('pk="None"', 'pk="1"') # Is ignored, but needs to be an integer
+        response = self.client.put(url, data=serialized_poll, content_type='application/xml')
+        updated_poll = Poll.objects.get(id=1)
+        self.failUnlessEqual(updated_poll.question, "New question")
+        self.failUnlessEqual(updated_poll.password, "new_secret")
+                
+        # JSON
+        url = '/fulljson/polls/'
+        response = self.client.get(url)
+        self.failUnlessEqual(response.status_code, 200)
+        
+        #  Create
+        new_poll = Poll(
+            question = 'Does JSON submission work?',
+            password = 'secret',
+            pub_date = datetime.now()
+        )
+        serialized_poll = serializers.serialize('json', [new_poll])
+        serialized_poll = serialized_poll.replace('"pk": "None"', '"pk": "1"') # Is ignored, but needs to be an integer
+        response = self.client.post(url, data=serialized_poll, content_type='application/json')
+        self.failUnlessEqual(response.status_code, 201)
+        response_content = re.sub('"pk": "\d+",', '"pk": "1",', response.content)
+        self.failUnlessEqual(serialized_poll, response_content)
+        response = self.client.get(url)
+        self.failUnlessEqual(response.status_code, 200)
+        self.failIfEqual(response_content.find("JSON submission"), -1)
+        
+        #  Update
+        url = '/fulljson/polls/2/'
+        updated_poll = Poll(
+            question = 'Another question',
+            password = 'another_secret',
+            pub_date = datetime.now()
+        )
+        serialized_poll = serializers.serialize('json', [updated_poll])
+        serialized_poll = serialized_poll.replace('"pk": "None"', '"pk": "1"') # Is ignored, but needs to be an integer
+        response = self.client.put(url, data=serialized_poll, content_type='application/json')
+        updated_poll = Poll.objects.get(id=2)
+        self.failUnlessEqual(updated_poll.question, "Another question")
+        self.failUnlessEqual(updated_poll.password, "another_secret")
+        
 class AuthenticationTest(TestCase):
     
     fixtures = ['initial_data.json']

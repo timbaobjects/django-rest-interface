@@ -34,17 +34,12 @@ class HttpBasicAuthentication(object):
         self.realm = realm
         self.authfunc = authfunc
     
-    def challenge(self):
+    def challenge_headers(self):
         """
-        Returns a HttpResponse that asks for appropriate
+        Returns the http headers that ask for appropriate
         authorization.
         """
-        # TODO: Mimetype, response content need to match
-        # responder class.
-        response =  HttpResponse(_('Authorization Required'), mimetype="text/plain")
-        response['WWW-Authenticate'] = 'Basic realm="%s"' % self.realm
-        response.status_code = 401
-        return response
+        return {'WWW-Authenticate' : 'Basic realm="%s"' % self.realm}
     
     def is_authenticated(self, request):
         """
@@ -138,9 +133,9 @@ class HttpDigestAuthentication(object):
         computed_response = md5.md5(chk).hexdigest()
         return computed_response
     
-    def challenge(self, stale = ''):
+    def challenge_headers(self, stale=''):
         """
-        Returns a HttpResponse that asks for appropriate
+        Returns the http headers that ask for appropriate
         authorization.
         """
         nonce  = md5.md5(
@@ -153,12 +148,7 @@ class HttpDigestAuthentication(object):
         if stale:
             parts['stale'] = 'true'
         head = ", ".join(['%s="%s"' % (k, v) for (k, v) in parts.items()])
-        response =  HttpResponse(_('Authorization Required'), mimetype="text/plain")
-        response['WWW-Authenticate'] = 'Digest %s' % head
-        response.status_code = 401
-        # TODO: Mimetype, response content need to match
-        # responder class.
-        return response
+        return {'WWW-Authenticate':'Digest %s' % head}
     
     def is_authenticated(self, request):
         """

@@ -34,7 +34,8 @@ class Resource(object):
     Generic resource class that can be used for
     resources that are not based on Django models.
     """
-    def __init__(self, authentication=None, permitted_methods=None):
+    def __init__(self, authentication=None, permitted_methods=None,
+                 mimetype='text/html'):
         """
         authentication:
             the authentication instance that checks whether a
@@ -49,6 +50,7 @@ class Resource(object):
             self.permitted_methods = [op.upper() for op in permitted_methods]
         else:
             self.permitted_methods = ["GET"]
+        
     
     def __call__(self, request, *args, **kwargs):
         """
@@ -59,7 +61,11 @@ class Resource(object):
         # Check permission
         if self.authentication:
             if not self.authentication.is_authenticated(request):
-                return self.authentication.challenge()
+                response =  HttpResponse(_('Authorization Required'), mimetype="text/plain")
+                challenge_headers = self.authentication.challenge_headers()
+                response.headers.update(challenge_headers)
+                response.status_code = 401
+                return response
         request_method = request.method.upper()
         if request_method not in self.permitted_methods:
             return HttpResponseNotAllowed(self.permitted_methods)

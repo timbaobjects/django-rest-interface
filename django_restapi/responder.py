@@ -97,8 +97,7 @@ class SerializeResponder(object):
                     object_list = []
                 else:
                     return self.error(request, 404)
-            # TODO: Each page needs to include a link to the
-            # next page
+            # TODO: Each page needs to include a link to the next page
         else:
             object_list = list(queryset)
         # TODO: Each element needs to include its resource url
@@ -156,7 +155,7 @@ class XMLResponder(SerializeResponder):
             for (model_field, errors) in error_dict.items():
                 for error in errors:
                     xml.addQuickElement(name=model_field, contents=error)
-            xml.endElement("model-errors")        
+            xml.endElement("model-errors")
         xml.endElement("django-error")
         xml.endDocument()
         return response
