@@ -9,8 +9,8 @@ from django.http import *
 from django.newforms.util import ErrorDict
 from django.utils.functional import curry
 from django.utils.translation.trans_null import _
-from django_restapi.resource import Resource, load_put_and_files, reverse
-from django_restapi.receiver import FormReceiver
+from resource import Resource, load_put_and_files, reverse
+from receiver import FormReceiver
 
 class InvalidModelData(Exception):
     """
