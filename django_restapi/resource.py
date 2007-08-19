@@ -50,7 +50,7 @@ class Resource(object):
         # Access restrictions
         self.authentication = authentication
         if permitted_methods:
-            self.permitted_methods = [op.upper() for op in permitted_methods]
+            self.permitted_methods = [m.upper() for m in permitted_methods]
         else:
             self.permitted_methods = ["GET"]
         

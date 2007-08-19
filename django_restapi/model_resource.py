@@ -4,6 +4,7 @@ Model-bound resource class.
 from django import newforms as forms
 from django.conf.urls.defaults import patterns
 from django.http import *
+from django.newforms import BaseForm
 from django.newforms.util import ErrorDict
 from django.utils.functional import curry
 from django.utils.translation.trans_null import _
@@ -24,9 +25,9 @@ class Collection(Resource):
     """
     Resource for a collection of models (queryset).
     """
-    def __init__(self, queryset, responder, receiver=None,
-                 authentication=None, permitted_methods=None,
-                 expose_fields=None, entry_class=None):
+    def __init__(self, queryset, responder, receiver=None, authentication=None,
+                 permitted_methods=None, expose_fields=None, entry_class=None,
+                 form_class=None):
         """
         queryset:
             determines the subset of objects (of a Django model)
@@ -50,6 +51,9 @@ class Collection(Resource):
         entry_class:
             class used for entries in create() and get_entry();
             default: class Entry (see below)
+        form_class:
+            base form class used for data validation and
+            conversion in self.create() and Entry.update()
         """
         # Available data
         self.queryset = queryset
@@ -59,15 +63,20 @@ class Collection(Resource):
             receiver = FormReceiver()
         self.receiver = receiver
         
+        # Input validation
+        if not form_class:
+            form_class = BaseForm
+        self.form_class = form_class
+        
         # Output format / responder setup
         self.responder = responder
         if not expose_fields:
             expose_fields = [field.name for field in queryset.model._meta.fields]
         responder.expose_fields = expose_fields
         if hasattr(responder, 'create_form'):
-            responder.create_form = curry(responder.create_form, queryset=queryset)
+            responder.create_form = curry(responder.create_form, queryset=queryset, form_class=form_class)
         if hasattr(responder, 'update_form'):
-            responder.update_form = curry(responder.update_form, queryset=queryset)
+            responder.update_form = curry(responder.update_form, queryset=queryset, form_class=form_class)
                 
         # Access restrictions
         Resource.__init__(self, authentication, permitted_methods)
@@ -144,7 +153,7 @@ class Collection(Resource):
         redirects to the resource URI. 
         """
         # Create form filled with POST data
-        ResourceForm = forms.form_for_model(self.queryset.model)
+        ResourceForm = forms.form_for_model(self.queryset.model, form=self.form_class)
         data = self.receiver.get_post_data(request)
         form = ResourceForm(data)
         
@@ -212,7 +221,7 @@ class Entry(object):
         request to the resource URI with method PUT.
         """
         # Create a form from the model/PUT data
-        ResourceForm = forms.form_for_instance(self.model)
+        ResourceForm = forms.form_for_instance(self.model, form=self.collection.form_class)
         data = self.collection.receiver.get_put_data(request)
         form = ResourceForm(data)
         

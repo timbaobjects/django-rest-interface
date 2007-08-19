@@ -273,11 +273,11 @@ class TemplateResponder(object):
         response.status_code = status_code
         return response
     
-    def create_form(self, request, queryset):
+    def create_form(self, request, queryset, form_class):
         """
         Render form for creation of new collection entry.
         """
-        ResourceForm = forms.form_for_model(queryset.model)
+        ResourceForm = forms.form_for_model(queryset.model, form=form_class)
         if request.POST:
             form = ResourceForm(request.POST)
         else:
@@ -285,14 +285,14 @@ class TemplateResponder(object):
         template_name = '%s/%s_form.html' % (self.template_dir, queryset.model._meta.module_name)
         return render_to_response(template_name, {'form':form})
 
-    def update_form(self, request, pk, queryset):
+    def update_form(self, request, pk, queryset, form_class):
         """
         Render edit form for single entry.
         """
         # Remove queryset cache by cloning the queryset
         queryset = queryset._clone()
         elem = queryset.get(**{queryset.model._meta.pk.name : pk})
-        ResourceForm = forms.form_for_instance(elem)
+        ResourceForm = forms.form_for_instance(elem, form=form_class)
         if request.PUT:
             form = ResourceForm(request.PUT)
         else:
