@@ -2,8 +2,7 @@
 Data format classes ("responders") that can be plugged 
 into model_resource.ModelResource and determine how
 the objects of a ModelResource instance are rendered
-(e.g. serialized to XML, rendered by Django's generic
-views, ...).
+(e.g. serialized to XML, rendered by templates, ...).
 """
 from django.core import serializers
 from django.core.handlers.wsgi import STATUS_CODE_TEXT

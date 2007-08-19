@@ -37,8 +37,8 @@ class FormReceiver(Receiver):
 
 class SerializeReceiver(Receiver):
     """
-    Base class for all data formats that are possible
-    with Django's serializer framework.
+    Base class for all data formats possible
+    within Django's serializer framework.
     """
     def __init__(self, format):
         self.format = format

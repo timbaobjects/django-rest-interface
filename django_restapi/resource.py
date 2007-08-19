@@ -17,7 +17,7 @@ def load_put_and_files(request):
         request._load_post_and_files()
         request.method = 'PUT'
         request.PUT = request.POST
-        request.POST = {}
+        del request._post
 
 def reverse(viewname, args=(), kwargs=None):
     """
