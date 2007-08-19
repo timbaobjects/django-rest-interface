@@ -2,7 +2,7 @@
 Generic resource class.
 """
 from django.core.urlresolvers import reverse as _reverse
-from django.http import Http404, HttpResponseNotAllowed, HttpResponseBadRequest, QueryDict
+from django.http import Http404, HttpResponse, HttpResponseNotAllowed
 
 def load_put_and_files(request):
     """
@@ -54,6 +54,8 @@ class Resource(object):
         else:
             self.permitted_methods = ["GET"]
         
+        # Output format
+        self.mimetype = mimetype
     
     def __call__(self, request, *args, **kwargs):
         """
@@ -64,7 +66,7 @@ class Resource(object):
         # Check permission
         if self.authentication:
             if not self.authentication.is_authenticated(request):
-                response =  HttpResponse(_('Authorization Required'), mimetype="text/plain")
+                response = HttpResponse(_('Authorization Required'), mimetype=self.mimetype)
                 challenge_headers = self.authentication.challenge_headers()
                 response.headers.update(challenge_headers)
                 response.status_code = 401
