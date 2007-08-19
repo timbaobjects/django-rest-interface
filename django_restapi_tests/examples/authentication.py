@@ -2,7 +2,7 @@ from django.conf.urls.defaults import *
 from django_restapi.model_resource import Collection
 from django_restapi.responder import *
 from django_restapi.authentication import *
-from django_restapi_tests.polls.models import Poll, Choice
+from django_restapi_tests.polls.models import Poll
 
 # HTTP Basic
 #

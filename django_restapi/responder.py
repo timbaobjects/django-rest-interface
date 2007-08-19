@@ -48,8 +48,8 @@ class SerializeResponder(object):
         """
         # Hide unexposed fields
         hidden_fields = []
-        for object in list(object_list):
-            for field in object._meta.fields:
+        for obj in list(object_list):
+            for field in obj._meta.fields:
                 if not field.name in self.expose_fields and field.serialize:
                     field.serialize = False
                     hidden_fields.append(field)
@@ -66,13 +66,15 @@ class SerializeResponder(object):
         # TODO: Include the resource urls of related resources?
         return HttpResponse(self.render([elem]), self.mimetype)
     
-    def error(self, request, status_code, error_dict=ErrorDict()):
+    def error(self, request, status_code, error_dict=None):
         """
         Handles errors in a RESTful way.
         - appropriate status code
         - appropriate mimetype
         - human-readable error message
         """
+        if not error_dict:
+            error_dict = ErrorDict()
         response = HttpResponse(mimetype = self.mimetype)
         response.write('%d %s' % (status_code, STATUS_CODE_TEXT[status_code]))
         if error_dict:
@@ -112,12 +114,14 @@ class JSONResponder(SerializeResponder):
         SerializeResponder.__init__(self, 'json', 'application/json',
                     paginate_by=paginate_by, allow_empty=allow_empty)
 
-    def error(self, request, status_code, error_dict=ErrorDict()):
+    def error(self, request, status_code, error_dict=None):
         """
         Return JSON error response that includes a human readable error
         message, application-specific errors and a machine readable
         status code.
         """
+        if not error_dict:
+            error_dict = ErrorDict()
         response = HttpResponse(mimetype = self.mimetype)
         response.status_code = status_code
         response_dict = {
@@ -136,13 +140,15 @@ class XMLResponder(SerializeResponder):
         SerializeResponder.__init__(self, 'xml', 'application/xml',
                     paginate_by=paginate_by, allow_empty=allow_empty)
 
-    def error(self, request, status_code, error_dict=ErrorDict()):
+    def error(self, request, status_code, error_dict=None):
         """
         Return XML error response that includes a human readable error
         message, application-specific errors and a machine readable
         status code.
         """
         from django.conf import settings
+        if not error_dict:
+            error_dict = ErrorDict()
         response = HttpResponse(mimetype = self.mimetype)
         response.status_code = status_code
         xml = SimplerXMLGenerator(response, settings.DEFAULT_CHARSET)
@@ -166,11 +172,13 @@ class TemplateResponder(object):
     generic views).
     """
     def __init__(self, template_dir, paginate_by=None, template_loader=loader,
-                 extra_context={}, allow_empty=False, context_processors=None,
+                 extra_context=None, allow_empty=False, context_processors=None,
                  template_object_name='object', mimetype=None):
         self.template_dir = template_dir
         self.paginate_by = paginate_by
         self.template_loader = template_loader
+        if not extra_context:
+            extra_context = {}
         for key, value in extra_context.items():
             if callable(value):
                 extra_context[key] = value()
@@ -252,10 +260,12 @@ class TemplateResponder(object):
         populate_xheaders(request, response, elem.__class__, getattr(elem, elem._meta.pk.name))
         return response
     
-    def error(self, request, status_code, error_dict=ErrorDict()):
+    def error(self, request, status_code, error_dict=None):
         """
         Renders error template (template name: error status code).
         """
+        if not error_dict:
+            error_dict = ErrorDict()
         response = direct_to_template(request, 
             template = '%s/%s.html' % (self.template_dir, str(status_code)),
             extra_context = { 'errors' : error_dict },

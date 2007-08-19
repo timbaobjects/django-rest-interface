@@ -15,10 +15,10 @@ def get_friendship_list():
     for person in people:
         for friend in person.friends.all():
             friendship = [person, friend]
-            friendship.sort(cmp=lambda x,y: cmp(x.name, y.name))
+            friendship.sort(cmp=lambda x, y: cmp(x.name, y.name))
             if friendship not in friendships:
                 friendships.append(friendship)
-    friendships.sort(cmp=lambda x,y: cmp(x[0].name, y[0].name))
+    friendships.sort(cmp=lambda x, y: cmp(x[0].name, y[0].name))
     return friendships
 
 def get_friendship(person_id, friend_id):

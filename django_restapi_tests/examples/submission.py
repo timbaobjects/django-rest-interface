@@ -2,7 +2,7 @@ from django.conf.urls.defaults import *
 from django_restapi.model_resource import Collection
 from django_restapi.responder import *
 from django_restapi.receiver import *
-from django_restapi_tests.polls.models import Poll, Choice
+from django_restapi_tests.polls.models import Poll
 
 fullxml_poll_resource = Collection(
     queryset = Poll.objects.all(), 

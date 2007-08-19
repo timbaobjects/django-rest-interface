@@ -3,8 +3,6 @@ Model-bound resource class.
 """
 from django import newforms as forms
 from django.conf.urls.defaults import patterns
-from django.db.models.fields import AutoField, CharField, IntegerField, \
-         PositiveIntegerField, SlugField, SmallIntegerField
 from django.http import *
 from django.newforms.util import ErrorDict
 from django.utils.functional import curry
@@ -17,7 +15,9 @@ class InvalidModelData(Exception):
     Raised if create/update fails because the PUT/POST 
     data is not appropriate.
     """
-    def __init__(self, errors=ErrorDict()):
+    def __init__(self, errors=None):
+        if not errors:
+            errors = ErrorDict()
         self.errors = errors
 
 class Collection(Resource):
@@ -48,13 +48,16 @@ class Collection(Resource):
             the model fields that can be accessed
             by the HTTP methods described in permitted_methods
         entry_class:
-            class used for entries in create() and get_entry()
+            class used for entries in create() and get_entry();
+            default: class Entry (see below)
         """
         # Available data
         self.queryset = queryset
         
         # Input format
-        self.receiver = receiver or FormReceiver()
+        if not receiver:
+            receiver = FormReceiver()
+        self.receiver = receiver
         
         # Output format / responder setup
         self.responder = responder
@@ -69,7 +72,9 @@ class Collection(Resource):
         # Access restrictions
         Resource.__init__(self, authentication, permitted_methods)
         
-        self.entry_class = entry_class or Entry
+        if not entry_class:
+            entry_class = Entry
+        self.entry_class = entry_class
     
     def __call__(self, request, *args, **kwargs):
         """
@@ -93,7 +98,7 @@ class Collection(Resource):
             response['Allow'] = ', '.join(self.permitted_methods)
             return response
         
-        # Remove queryset cache by cloning queryset
+        # Remove queryset cache
         self.queryset = self.queryset._clone()
         
         # Determine whether the collection or a specific
@@ -193,7 +198,7 @@ class Entry(object):
     
     def read(self, request):
         """
-        Returns a representation of a single model..
+        Returns a representation of a single model.
         The format depends on which responder (e.g. JSONResponder)
         is assigned to this ModelResource instance. Usually called by a
         HTTP request to the resource URI with method GET.

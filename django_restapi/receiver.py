@@ -20,8 +20,10 @@ class Receiver(object):
     """
     def get_data(self, request, method):
         raise Exception("Receiver subclass needs to implement get_data!")
+    
     def get_post_data(self, request):
         return self.get_data(request, 'POST')
+    
     def get_put_data(self, request):
         return self.get_data(request, 'PUT')
 
@@ -40,6 +42,7 @@ class SerializeReceiver(Receiver):
     """
     def __init__(self, format):
         self.format = format
+    
     def get_data(self, request, method):
         # TODO: Allow partial updates?
         try:

@@ -6,8 +6,7 @@ from django.utils.functional import curry
 from django_restapi.authentication import HttpDigestAuthentication
 from django_restapi_tests.examples.authentication import digest_authfunc
 from django_restapi_tests.polls.models import Poll
-import webbrowser, random, re, time, urllib2
-import hashlib
+import webbrowser, re
 
 DIGEST_AUTH = 'Digest username="%(username)s", realm="%(realm)s", nonce="%(nonce)s", uri="%(fullpath)s", algorithm=MD5, response="%(response)s", qop=%(qop)s, nc=%(nc)s, cnonce="%(cnonce)s"'
 
@@ -37,7 +36,7 @@ class BasicTest(TestCase):
             
             response = self.client.get(url)
             self.failUnlessEqual(response.status_code, 200)
-            assert response.content.find('secret') == -1
+            self.failUnlessEqual(response.content.find('secret'), -1)
     
             # Get list of choices
             url = '/%s/choices/' % format
@@ -49,7 +48,7 @@ class BasicTest(TestCase):
             self.failUnlessEqual(response.status_code, 200)
                     
             # Third page must not exist.
-            response = self.client.get('%s?page=3' % url)
+            response = self.client.get(url, {'page' : 3})
             self.failUnlessEqual(response.status_code, 404)
                     
             # Try to create poll with insufficient data
@@ -163,7 +162,6 @@ class BasicTest(TestCase):
         location = response.headers['Location']
         poll_id = int(re.findall("\d+", location)[0])
         self.failUnlessEqual(poll_id, 1)
-        choice_id = int(re.findall("\d+", location)[1])
     
         # Try to update choice with insufficient data (needs to fail)
         url = location

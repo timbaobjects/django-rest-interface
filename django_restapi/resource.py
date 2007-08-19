@@ -15,15 +15,18 @@ def load_put_and_files(request):
     if request.method == 'PUT':
         request.method = 'POST'
         request._load_post_and_files()
-        request.PUT = request.POST
         request.method = 'PUT'
+        request.PUT = request.POST
+        request.POST = {}
 
-def reverse(viewname, args=(), kwargs={}):
+def reverse(viewname, args=(), kwargs=None):
     """
     Return the URL associated with a view and specified parameters.
     If the regular expression used specifies an optional slash at 
     the end of the URL, add the slash.
     """
+    if not kwargs:
+        kwargs = {}
     url = _reverse(viewname, None, args, kwargs)
     if url[-2:] == '/?':
         url = url[:-1]
