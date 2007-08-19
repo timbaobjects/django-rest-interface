@@ -62,7 +62,6 @@ class SerializeResponder(object):
         """
         Renders single model objects to HttpResponse.
         """
-        # TODO: Include the resource urls of related resources?
         return HttpResponse(self.render([elem]), self.mimetype)
     
     def error(self, request, status_code, error_dict=None):
@@ -98,11 +97,8 @@ class SerializeResponder(object):
                     object_list = []
                 else:
                     return self.error(request, 404)
-            # TODO: Each page needs to include a link to the next page
         else:
             object_list = list(queryset)
-        # TODO: Each element needs to include its resource url
-        # TODO: Include the resource urls of related resources?
         return HttpResponse(self.render(object_list), self.mimetype)
     
 class JSONResponder(SerializeResponder):

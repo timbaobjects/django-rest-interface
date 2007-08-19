@@ -44,7 +44,6 @@ class SerializeReceiver(Receiver):
         self.format = format
     
     def get_data(self, request, method):
-        # TODO: Allow partial updates?
         try:
             deserialized_objects = list(serializers.deserialize(self.format, request.raw_post_data))
         except serializers.base.DeserializationError:
@@ -55,10 +54,8 @@ class SerializeReceiver(Receiver):
         data = {}
         for field in model._meta.fields:
             data[field.name] = getattr(model, field.name)
-        # TODO: m2m receiver
-        #m2m = deserialized_objects[0].m2m_data
-        #for accessor_name, object_list in m2m.items():
-        #    setattr(self.object, accessor_name, object_list)
+        # m2m = deserialized_objects[0].m2m_data
+        # data.update(m2m)
         return data
 
 class JSONReceiver(SerializeReceiver):
