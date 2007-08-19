@@ -79,7 +79,11 @@ class Collection(Resource):
             responder.update_form = curry(responder.update_form, queryset=queryset, form_class=form_class)
                 
         # Access restrictions
-        Resource.__init__(self, authentication, permitted_methods)
+        self.authentication = authentication
+        if permitted_methods:
+            self.permitted_methods = [m.upper() for m in permitted_methods]
+        else:
+            self.permitted_methods = ["GET"]
         
         if not entry_class:
             entry_class = Entry
