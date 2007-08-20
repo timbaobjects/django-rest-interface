@@ -17,6 +17,16 @@ def djangouser_auth(username, password):
     except User.DoesNotExist:
         return False
 
+class NoAuthentication(object):
+    """
+    No authentication: Permit every request.
+    """
+    def is_authenticated(self, request):
+        return True
+
+    def challenge_headers(self):
+        return {}
+
 class HttpBasicAuthentication(object):
     """
     HTTP/1.0 basic authentication.

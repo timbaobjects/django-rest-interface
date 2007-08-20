@@ -29,8 +29,7 @@ class SerializeResponder(object):
             framework. By default: xml, python, json, (yaml).
         mimetype:
             if the default None is not changed, any HttpResponse calls 
-            use settings.DEFAULT_CONTENT_TYPE and
-            settings.DEFAULT_CHARSET
+            use settings.DEFAULT_CONTENT_TYPE and settings.DEFAULT_CHARSET
         paginate_by:
             Number of elements per page. Default: All elements.
         """
