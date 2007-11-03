@@ -151,7 +151,7 @@ class Collection(ResourceBase):
             model_entry = self.entry_class(self, new_model)
             response = model_entry.read(request)
             response.status_code = 201
-            response._headers['Location'] = model_entry.get_url()
+            response['Location'] = model_entry.get_url()
             return response
 
         # Otherwise return a 400 Bad Request error.
@@ -221,7 +221,7 @@ class Entry(object):
             form.save()
             response = self.read(request)
             response.status_code = 200
-            response._headers['Location'] = self.get_url()
+            response['Location'] = self.get_url()
             return response
         
         # Otherwise return a 400 Bad Request error.

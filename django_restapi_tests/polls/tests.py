@@ -68,7 +68,7 @@ class BasicTest(TestCase):
             }
             response = self.client.post(url, params)
             self.failUnlessEqual(response.status_code, 201)
-            location = response._headers['Location']
+            location = response['Location']
             poll_id = int(re.findall("\d+", location)[0])
             
             # Try to change poll with inappropriate data
