@@ -5,6 +5,7 @@ of model data need to look like (e.g. form submission MIME types,
 XML, JSON, ...).
 """
 from django.core import serializers
+from django.forms import model_to_dict
 
 class InvalidFormData(Exception):
     """
@@ -51,12 +52,8 @@ class SerializeReceiver(Receiver):
         if len(deserialized_objects) != 1:
             raise InvalidFormData
         model = deserialized_objects[0].object
-        data = {}
-        for field in model._meta.fields:
-            data[field.name] = getattr(model, field.name)
-        # m2m = deserialized_objects[0].m2m_data
-        # data.update(m2m)
-        return data
+        
+        return model_to_dict(model)
 
 class JSONReceiver(SerializeReceiver):
     """

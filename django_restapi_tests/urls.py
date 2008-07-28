@@ -1,4 +1,5 @@
 from django.conf.urls.defaults import *
+from django.contrib import admin
 
 urlpatterns = patterns('',
    url(r'', include('django_restapi_tests.examples.simple')),
@@ -9,5 +10,5 @@ urlpatterns = patterns('',
    url(r'', include('django_restapi_tests.examples.authentication')),
    url(r'', include('django_restapi_tests.examples.submission')),
    url(r'', include('django_restapi_tests.examples.generic_resource')),
-   url(r'^admin/', include('django.contrib.admin.urls'))
+   url(r'^admin/(.*)', admin.site.root)
 )

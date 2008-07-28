@@ -3,8 +3,8 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 class Poll(models.Model):
-    question = models.CharField(maxlength=200)
-    password = models.CharField(maxlength=200)
+    question = models.CharField(max_length=200)
+    password = models.CharField(max_length=200)
     pub_date = models.DateTimeField(_('date published'), default=datetime.now)
     class Admin:
         pass
@@ -20,7 +20,7 @@ class Poll(models.Model):
 
 class Choice(models.Model):
     poll = models.ForeignKey(Poll)
-    choice = models.CharField(maxlength=200)
+    choice = models.CharField(max_length=200)
     votes = models.IntegerField()
     class Admin:
         pass

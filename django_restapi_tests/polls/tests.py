@@ -159,14 +159,16 @@ class BasicTest(TestCase):
         }
         response = self.client.post(url, params)
         self.failUnlessEqual(response.status_code, 201)
-        location = response._headers['Location']
+        location = response._headers['location'][1]
         poll_id = int(re.findall("\d+", location)[0])
         self.failUnlessEqual(poll_id, 1)
     
         # Try to update choice with insufficient data (needs to fail)
-        url = location
+        url = location[17:]
+        # strip the protocol head and base url:
+        # only working with paths! (note: bad variable name choice!!!)
         params = {
-            'poll' : 1, # TODO: Should be taken from URL
+            'poll' : poll_id,
             'choice' : 'New choice',
             'votes' : 'Should be an integer'
         }
@@ -175,7 +177,7 @@ class BasicTest(TestCase):
         
         # Update choice
         params = {
-            'poll' : 1, # TODO: Should be taken from URL
+            'poll' : poll_id,
             'choice' : 'New choice',
             'votes' : '712'
         }

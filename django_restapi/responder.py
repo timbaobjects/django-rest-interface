@@ -6,11 +6,13 @@ the objects of a ModelResource instance are rendered
 """
 from django.core import serializers
 from django.core.handlers.wsgi import STATUS_CODE_TEXT
-from django.core.paginator import ObjectPaginator, InvalidPage
+from django.core.paginator import QuerySetPaginator, InvalidPage
+# the correct paginator for Model objects is the QuerySetPaginator,
+# not the Paginator! (see Django doc)
 from django.core.xheaders import populate_xheaders
-from django import newforms as forms
+from django import forms
 from django.http import Http404, HttpResponse
-from django.newforms.util import ErrorDict
+from django.forms.util import ErrorDict
 from django.shortcuts import render_to_response
 from django.template import loader, RequestContext
 from django.utils import simplejson
@@ -85,12 +87,12 @@ class SerializeResponder(object):
         Renders a list of model objects to HttpResponse.
         """
         if self.paginate_by:
-            paginator = ObjectPaginator(queryset, self.paginate_by)
+            paginator = QuerySetPaginator(queryset, self.paginate_by)
             if not page:
                 page = request.GET.get('page', 1)
             try:
                 page = int(page)
-                object_list = paginator.get_page(page - 1)
+                object_list = paginator.page(page).object_list
             except (InvalidPage, ValueError):
                 if page == 1 and self.allow_empty:
                     object_list = []
@@ -121,7 +123,7 @@ class JSONResponder(SerializeResponder):
         response_dict = {
             "error-message" : '%d %s' % (status_code, STATUS_CODE_TEXT[status_code]),
             "status-code" : status_code,
-            "model-errors" : error_dict
+            "model-errors" : error_dict.as_ul()
         }
         simplejson.dump(response_dict, response)
         return response
@@ -198,30 +200,31 @@ class TemplateResponder(object):
         """
         template_name = '%s/%s_list.html' % (self.template_dir, queryset.model._meta.module_name)
         if self.paginate_by:
-            paginator = ObjectPaginator(queryset, self.paginate_by)
+            paginator = QuerySetPaginator(queryset, self.paginate_by)
             if not page:
                 page = request.GET.get('page', 1)
             try:
                 page = int(page)
-                object_list = paginator.get_page(page - 1)
+                object_list = paginator.page(page).object_list
             except (InvalidPage, ValueError):
                 if page == 1 and self.allow_empty:
                     object_list = []
                 else:
                     raise Http404
+            current_page = paginator.page(page)
             c = RequestContext(request, {
                 '%s_list' % self.template_object_name: object_list,
-                'is_paginated': paginator.pages > 1,
+                'is_paginated': paginator.num_pages > 1,
                 'results_per_page': self.paginate_by,
-                'has_next': paginator.has_next_page(page - 1),
-                'has_previous': paginator.has_previous_page(page - 1),
+                'has_next': current_page.has_next(),
+                'has_previous': current_page.has_previous(),
                 'page': page,
                 'next': page + 1,
                 'previous': page - 1,
-                'last_on_page': paginator.last_on_page(page - 1),
-                'first_on_page': paginator.first_on_page(page - 1),
-                'pages': paginator.pages,
-                'hits' : paginator.hits,
+                'last_on_page': current_page.end_index(),
+                'first_on_page': current_page.start_index(),
+                'pages': paginator.num_pages,
+                'hits' : paginator.count,
             }, self.context_processors)
         else:
             object_list = queryset
