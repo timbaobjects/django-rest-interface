@@ -159,7 +159,7 @@ class BasicTest(TestCase):
         }
         response = self.client.post(url, params)
         self.failUnlessEqual(response.status_code, 201)
-        location = response._headers['location'][1]
+        location = response['location']
         poll_id = int(re.findall("\d+", location)[0])
         self.failUnlessEqual(poll_id, 1)
     
@@ -271,7 +271,7 @@ class AuthenticationTest(TestCase):
         e.g. {'nonce': '477be2a405a439cdba5227be89ba0f76', 'qop': 'auth', 'realm': 'realm1', 'opaque': '67d958f952de6bd4c1a88686f1b8a896'}
         and add missing params (method, path, username, cnonce, nc).
         """
-        www_auth_response = response._headers['WWW-Authenticate']
+        www_auth_response = response['WWW-Authenticate']
         self.failUnlessEqual(www_auth_response[:7].lower(), 'digest ')
         auth_params = auth_helper.get_auth_dict(www_auth_response[7:])
         self.failUnlessEqual(len(auth_params), 4)
@@ -305,7 +305,7 @@ class AuthenticationTest(TestCase):
         url = '/digest/polls/'
         response = self.client.get(url)
         self.failUnlessEqual(response.status_code, 401)
-        self.failUnlessEqual(response._headers.has_key('WWW-Authenticate'), True)
+        self.failUnlessEqual(response.has_header('WWW-Authenticate'), True)
         
         # Set up an auth class in order to avoid duplicate
         # authentication code.
