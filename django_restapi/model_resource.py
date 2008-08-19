@@ -4,7 +4,7 @@ Model-bound resource class.
 from django import forms
 from django.conf.urls.defaults import patterns
 from django.http import *
-from django.forms import BaseForm
+from django.forms import ModelForm, models
 from django.forms.util import ErrorDict
 from django.utils.functional import curry
 from django.utils.translation.trans_null import _
@@ -65,7 +65,7 @@ class Collection(ResourceBase):
         
         # Input validation
         if not form_class:
-            form_class = BaseForm
+            form_class = ModelForm
         self.form_class = form_class
         
         # Output format / responder setup
@@ -139,7 +139,7 @@ class Collection(ResourceBase):
         redirects to the resource URI. 
         """
         # Create form filled with POST data
-        ResourceForm = forms.form_for_model(self.queryset.model, form=self.form_class)
+        ResourceForm = models.modelform_factory(self.queryset.model, form=self.form_class)
         data = self.receiver.get_post_data(request)
         form = ResourceForm(data)
         
@@ -210,9 +210,11 @@ class Entry(object):
         request to the resource URI with method PUT.
         """
         # Create a form from the model/PUT data
-        ResourceForm = forms.form_for_instance(self.model, form=self.collection.form_class)
+        ResourceForm = models.modelform_factory(self.model.__class__, form=self.collection.form_class)
         data = self.collection.receiver.get_put_data(request)
-        form = ResourceForm(data)
+
+        form = ResourceForm(data, instance=self.model)
+        
         
         # If the data contains no errors, save the model,
         # return a "200 Ok" response with the model's
