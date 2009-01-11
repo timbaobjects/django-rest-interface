@@ -1,6 +1,7 @@
 """
 Generic resource class.
 """
+from django.utils.translation import ugettext as _
 from authentication import NoAuthentication
 from django.core.urlresolvers import reverse as _reverse
 from django.http import Http404, HttpResponse, HttpResponseNotAllowed
